@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AI Resume Enhancer — Modern UI</title>
+<style>
+  /* --- Global Resets & Base Styles --- */
+  *, *::before, *::after {
+    box-sizing: border-box;
+  }
+
+  :root {
+    /* Olive-brown color palette inspired by the image */
+    --color-primary-light: #cdc7b0; /* Light beige */
+    --color-primary-dark: #2a271e; /* Dark olive-brown */
+    --color-background-dark: #2a271e; /* Dark olive */
+    --color-background-mid: #3b392f; /* Darker brown container */
+    --color-text-light: #d5d3c9; /* Muted off-white */
+    --color-text-mid: #8e8a75; /* Muted grayish brown */
+    --color-accent: #8e7d42; /* Muted yellow-olive for subtle accents */
+  }
+
+  body {
+    margin: 0;
+    padding: 2rem 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: var(--color-background-dark);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    color: var(--color-text-light);
+    position: relative;
+    overflow-y: auto;
+  }
+
+  /* --- Advanced Background Effect --- */
+  body::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: 
+      radial-gradient(circle at 0% 0%, rgba(35, 33, 27, 0.9) 0%, transparent 40%),
+      radial-gradient(circle at 100% 100%, rgba(43, 40, 33, 0.9) 0%, transparent 40%),
+      var(--color-background-dark);
+    background-size: cover;
+    z-index: -1;
+    animation: background-pan 20s ease-in-out infinite alternate;
+  }
+
+  @keyframes background-pan {
+    from {
+      transform: translate(0, 0);
+    }
+    to {
+      transform: translate(25%, 25%);
+    }
+  }
+
+  /* --- Container & Layout --- */
+  .container {
+    background: rgba(59, 57, 47, 0.75);
+    backdrop-filter: blur(15px);
+    padding: 3rem 4rem;
+    border-radius: 1.5rem;
+    box-shadow:
+      0 15px 45px rgba(45, 42, 30, 0.8),
+      0 0 25px rgba(205, 199, 176, 0.15);
+    max-width: 900px;
+    width: 95%;
+    border: 1px solid rgba(205, 199, 176, 0.15);
+    transition: transform 0.4s ease, box-shadow 0.4s ease;
+  }
+  .container:hover {
+    transform: translateY(-8px);
+    box-shadow:
+      0 20px 60px rgba(45, 42, 30, 0.9),
+      0 0 30px rgba(205, 199, 176, 0.25);
+  }
+
+  /* --- Heading with subtle warm glow --- */
+  h1 {
+    margin-bottom: 3rem;
+    font-weight: 900;
+    font-size: 3rem;
+    text-align: center;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--color-primary-light);
+    text-shadow:
+      0 0 10px #cdc7b0,
+      0 0 20px #e3dfbf;
+  }
+
+  /* --- Layout for Form Groups --- */
+  .form-grid {
+    display: grid;
+    gap: 2.5rem;
+  }
+
+  /* --- Floating labels & inputs --- */
+  .form-group {
+    position: relative;
+    margin-bottom: 2.5rem;
+  }
+
+  input[type="file"],
+  textarea {
+    width: 100%;
+    padding: 1.6rem 1.2rem 0.8rem 1.2rem;
+    border: none;
+    border-radius: 0.9rem;
+    background: var(--color-background-mid);
+    color: var(--color-text-light);
+    font-size: 1rem;
+    resize: vertical;
+    box-shadow: inset 0 2px 8px rgba(0,0,0,0.4);
+    border: 1px solid transparent;
+    transition:
+      background-color 0.3s ease,
+      box-shadow 0.3s ease,
+      transform 0.2s ease,
+      border-color 0.3s ease;
+    font-family: 'Courier New', Courier, monospace;
+  }
+  input[type="file"]:focus,
+  textarea:focus {
+    outline: none;
+    background: #4a493f;
+    box-shadow:
+      inset 0 3px 10px rgba(255,255,255,0.05),
+      0 0 10px rgba(205, 199, 176, 0.3);
+    transform: scale(1.01);
+    border-color: var(--color-primary-light);
+  }
+  
+  input[type="file"]::file-selector-button {
+    background: #504c3d;
+    border: none;
+    padding: 0.8rem 1.5rem;
+    border-radius: 0.7rem;
+    color: var(--color-text-light);
+    font-weight: 700;
+    cursor: pointer;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+    box-shadow: 0 0 8px #504c3d;
+  }
+  input[type="file"]::file-selector-button:hover {
+    background: #67644f;
+    box-shadow: 0 0 12px #67644f;
+  }
+
+  label {
+    position: absolute;
+    top: 1.2rem;
+    left: 1.2rem;
+    color: var(--color-text-mid);
+    font-size: 1rem;
+    pointer-events: none;
+    transition: all 0.3s ease;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  }
+  input:focus + label,
+  textarea:focus + label,
+  input:not(:placeholder-shown) + label,
+  textarea:not(:placeholder-shown) + label {
+    top: 0.5rem;
+    left: 1.2rem;
+    font-size: 0.9rem;
+    color: var(--color-primary-light);
+    font-weight: 600;
+    text-shadow: 0 0 3px var(--color-primary-light);
+  }
+
+  /* --- Button & Loading Spinner --- */
+  button {
+    width: 100%;
+    padding: 1.5rem;
+    background: var(--color-primary-light);
+    border: none;
+    border-radius: 1rem;
+    font-weight: 800;
+    font-size: 1.4rem;
+    letter-spacing: 0.1em;
+    color: var(--color-primary-dark);
+    cursor: pointer;
+    box-shadow:
+      0 6px 20px rgba(40, 36, 24, 0.7);
+    transition:
+      background-color 0.3s ease,
+      box-shadow 0.3s ease,
+      transform 0.15s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.8rem;
+    user-select: none;
+  }
+  button:hover:not(:disabled) {
+    background: #e0dcb9;
+    box-shadow: 0 10px 25px rgba(40, 36, 24, 0.9);
+    transform: scale(1.03);
+  }
+  button:active:not(:disabled) {
+    background: #bcb893;
+    box-shadow: 0 4px 15px rgba(40, 36, 24, 0.9);
+    transform: scale(0.98);
+  }
+  button:disabled {
+    cursor: not-allowed;
+    opacity: 0.65;
+    box-shadow: none;
+    transform: none;
+  }
+
+  .spinner {
+    border: 3px solid var(--color-primary-dark);
+    border-top: 3px solid transparent;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  /* --- Result area --- */
+  #result {
+    margin-top: 3rem;
+    background: linear-gradient(145deg, #3c3a2f, #2a271e);
+    border-radius: 1.5rem;
+    padding: 2rem;
+    font-family: 'Courier New', Courier, monospace;
+    max-height: 380px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    font-size: 1rem;
+    color: var(--color-text-light);
+    box-shadow:
+      inset 0 0 20px #524f40,
+      0 0 25px #8e7d42aa;
+    user-select: text;
+    transition: background-color 0.3s ease;
+    border: 1px solid rgba(205, 199, 176, 0.2);
+  }
+  
+  /* --- Responsive Design --- */
+  @media (max-width: 768px) {
+    .container {
+      padding: 2rem 2.5rem;
+    }
+    h1 {
+      font-size: 2rem;
+    }
+    button {
+      font-size: 1.2rem;
+      padding: 1.2rem;
+    }
+    #result {
+      margin-top: 2rem;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .container {
+      padding: 1.5rem 1.5rem;
+    }
+    h1 {
+      font-size: 1.7rem;
+      margin-bottom: 2rem;
+    }
+    button {
+      font-size: 1.1rem;
+      padding: 1rem;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="container" role="main" aria-label="AI Resume Enhancer Form">
+  <h1>AI Resume Enhancer</h1>
+
+  <div class="form-grid">
+    <div class="form-group">
+      <input type="file" id="resumeFile" placeholder=" " accept=".pdf,.docx,.doc,.txt" aria-describedby="fileHelp" aria-required="true" />
+      <label for="resumeFile">Upload Your Resume (PDF, DOCX, DOC, TXT)</label>
+    </div>
+
+    <div class="form-group">
+      <textarea id="jobDescription" placeholder=" " rows="5" aria-required="true" aria-describedby="jdHelp"></textarea>
+      <label for="jobDescription">Paste Job Description</label>
+    </div>
+  </div>
+
+  <button type="button" id="enhanceBtn" onclick="uploadResume()">Enhance Resume</button>
+  
+  <pre id="result" tabindex="0" aria-live="polite" aria-label="Enhanced Resume Result"></pre>
+</div>
+
+<script>
+  const enhanceBtn = document.getElementById('enhanceBtn');
+  const fileInput = document.getElementById('resumeFile');
+  const jobDescription = document.getElementById('jobDescription');
+  const result = document.getElementById('result');
+
+  async function uploadResume() {
+    if (!fileInput.files.length) {
+      alert('Please select a resume file first.');
+      return;
+    }
+    if (!jobDescription.value.trim()) {
+      alert('Please paste the job description.');
+      return;
+    }
+
+    result.textContent = '';
+    enhanceBtn.disabled = true;
+    enhanceBtn.innerHTML = `Enhancing... <span class="spinner"></span>`;
+
+    try {
+      const formData = new FormData();
+      formData.append('file', fileInput.files[0]);
+      const url = `http://127.0.0.1:8000/resume/enhance_resume?job_description=${encodeURIComponent(jobDescription.value.trim())}`;
+
+      const response = await fetch(url, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.detail || 'Failed to enhance resume');
+      }
+
+      const data = await response.json();
+      result.textContent = data.message || JSON.stringify(data, null, 2);
+      result.focus();
+    } catch (err) {
+      alert(`Error: ${err.message}`);
+    } finally {
+      enhanceBtn.disabled = false;
+      enhanceBtn.textContent = 'Enhance Resume';
+    }
+  }
+</script>
+
+</body>
+</html>
