@@ -329,7 +329,7 @@
     try {
       const formData = new FormData();
       formData.append('file', fileInput.files[0]);
-      const url = `http://127.0.0.1:8000/resume/enhance_resume?job_description=${encodeURIComponent(jobDescription.value.trim())}`;
+      const url = `/resume/enhance_resume?job_description=${encodeURIComponent(jobDescription.value.trim())}`;
 
       const response = await fetch(url, {
         method: 'POST',
