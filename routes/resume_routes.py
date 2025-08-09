@@ -3,6 +3,7 @@ from fastapi.responses import FileResponse
 from uuid import uuid4
 from pathlib import Path
 from services.file_parser import extract_resume_text
+from config import UPLOAD_DIR
 
 from services.gemini_service import call_gemini_optimize_resume
 import aiofiles
@@ -10,10 +11,6 @@ import shutil
 import os
 
 router = APIRouter()
-
-# Directory for uploads
-UPLOAD_DIR = Path("uploads")
-UPLOAD_DIR.mkdir(exist_ok=True)
 
 ALLOWED_EXTENSIONS = {".pdf", ".docx", ".doc", ".txt"}
 
@@ -71,7 +68,7 @@ async def enhance_resume(
         matches = list(UPLOAD_DIR.glob(f"{resume_id}.*"))
         if not matches:
             raise HTTPException(status_code=404, detail="Resume not found")
-        resume_text = extract_text_from_resume(matches[0])
+        resume_text = extract_resume_text(matches[0])
     else:
         raise HTTPException(status_code=400, detail="Provide either a file or resume_id")
 
