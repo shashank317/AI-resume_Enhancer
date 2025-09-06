@@ -1,357 +1,440 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>AI Resume Enhancer — Modern UI</title>
-<style>
-  /* --- Global Resets & Base Styles --- */
-  *, *::before, *::after {
-    box-sizing: border-box;
-  }
-
-  :root {
-    /* Olive-brown color palette inspired by the image */
-    --color-primary-light: #cdc7b0; /* Light beige */
-    --color-primary-dark: #2a271e; /* Dark olive-brown */
-    --color-background-dark: #2a271e; /* Dark olive */
-    --color-background-mid: #3b392f; /* Darker brown container */
-    --color-text-light: #d5d3c9; /* Muted off-white */
-    --color-text-mid: #8e8a75; /* Muted grayish brown */
-    --color-accent: #8e7d42; /* Muted yellow-olive for subtle accents */
-  }
-
-  body {
-    margin: 0;
-    padding: 2rem 0;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: var(--color-background-dark);
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: flex-start;
-    color: var(--color-text-light);
-    position: relative;
-    overflow-y: auto;
-  }
-
-  /* --- Advanced Background Effect --- */
-  body::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
-    background: 
-      radial-gradient(circle at 0% 0%, rgba(35, 33, 27, 0.9) 0%, transparent 40%),
-      radial-gradient(circle at 100% 100%, rgba(43, 40, 33, 0.9) 0%, transparent 40%),
-      var(--color-background-dark);
-    background-size: cover;
-    z-index: -1;
-    animation: background-pan 20s ease-in-out infinite alternate;
-  }
-
-  @keyframes background-pan {
-    from {
-      transform: translate(0, 0);
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Resume Tailor</title>
+  <style>
+    /* -------- Base Styles -------- */
+    :root {
+      --color-bg: #f9fafb;
+      --color-card: #ffffff;
+      --color-border: #e5e7eb;
+      --color-text: #111827;
+      --color-text-muted: #6b7280;
+      --color-accent: #2563eb;
+      --color-accent-hover: #1d4ed8;
+      --radius: 1rem;
+      --shadow: 0 8px 24px rgba(0,0,0,0.06);
     }
-    to {
-      transform: translate(25%, 25%);
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: "Inter", system-ui, sans-serif;
+      background: var(--color-bg);
+      color: var(--color-text);
+      line-height: 1.7;
+      padding: 2rem;
+      overflow-x: hidden;
     }
-  }
 
-  /* --- Container & Layout --- */
-  .container {
-    background: rgba(59, 57, 47, 0.75);
-    backdrop-filter: blur(15px);
-    padding: 3rem 4rem;
-    border-radius: 1.5rem;
-    box-shadow:
-      0 15px 45px rgba(45, 42, 30, 0.8),
-      0 0 25px rgba(205, 199, 176, 0.15);
-    max-width: 900px;
-    width: 95%;
-    border: 1px solid rgba(205, 199, 176, 0.15);
-    transition: transform 0.4s ease, box-shadow 0.4s ease;
-  }
-  .container:hover {
-    transform: translateY(-8px);
-    box-shadow:
-      0 20px 60px rgba(45, 42, 30, 0.9),
-      0 0 30px rgba(205, 199, 176, 0.25);
-  }
-
-  /* --- Heading with subtle warm glow --- */
-  h1 {
-    margin-bottom: 3rem;
-    font-weight: 900;
-    font-size: 3rem;
-    text-align: center;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    color: var(--color-primary-light);
-    text-shadow:
-      0 0 10px #cdc7b0,
-      0 0 20px #e3dfbf;
-  }
-
-  /* --- Layout for Form Groups --- */
-  .form-grid {
-    display: grid;
-    gap: 2.5rem;
-  }
-
-  /* --- Floating labels & inputs --- */
-  .form-group {
-    position: relative;
-    margin-bottom: 2.5rem;
-  }
-
-  input[type="file"],
-  textarea {
-    width: 100%;
-    padding: 1.6rem 1.2rem 0.8rem 1.2rem;
-    border: none;
-    border-radius: 0.9rem;
-    background: var(--color-background-mid);
-    color: var(--color-text-light);
-    font-size: 1rem;
-    resize: vertical;
-    box-shadow: inset 0 2px 8px rgba(0,0,0,0.4);
-    border: 1px solid transparent;
-    transition:
-      background-color 0.3s ease,
-      box-shadow 0.3s ease,
-      transform 0.2s ease,
-      border-color 0.3s ease;
-    font-family: 'Courier New', Courier, monospace;
-  }
-  input[type="file"]:focus,
-  textarea:focus {
-    outline: none;
-    background: #4a493f;
-    box-shadow:
-      inset 0 3px 10px rgba(255,255,255,0.05),
-      0 0 10px rgba(205, 199, 176, 0.3);
-    transform: scale(1.01);
-    border-color: var(--color-primary-light);
-  }
-  
-  input[type="file"]::file-selector-button {
-    background: #504c3d;
-    border: none;
-    padding: 0.8rem 1.5rem;
-    border-radius: 0.7rem;
-    color: var(--color-text-light);
-    font-weight: 700;
-    cursor: pointer;
-    transition: background-color 0.3s ease, box-shadow 0.3s ease;
-    box-shadow: 0 0 8px #504c3d;
-  }
-  input[type="file"]::file-selector-button:hover {
-    background: #67644f;
-    box-shadow: 0 0 12px #67644f;
-  }
-
-  label {
-    position: absolute;
-    top: 1.2rem;
-    left: 1.2rem;
-    color: var(--color-text-mid);
-    font-size: 1rem;
-    pointer-events: none;
-    transition: all 0.3s ease;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  }
-  input:focus + label,
-  textarea:focus + label,
-  input:not(:placeholder-shown) + label,
-  textarea:not(:placeholder-shown) + label {
-    top: 0.5rem;
-    left: 1.2rem;
-    font-size: 0.9rem;
-    color: var(--color-primary-light);
-    font-weight: 600;
-    text-shadow: 0 0 3px var(--color-primary-light);
-  }
-
-  /* --- Button & Loading Spinner --- */
-  button {
-    width: 100%;
-    padding: 1.5rem;
-    background: var(--color-primary-light);
-    border: none;
-    border-radius: 1rem;
-    font-weight: 800;
-    font-size: 1.4rem;
-    letter-spacing: 0.1em;
-    color: var(--color-primary-dark);
-    cursor: pointer;
-    box-shadow:
-      0 6px 20px rgba(40, 36, 24, 0.7);
-    transition:
-      background-color 0.3s ease,
-      box-shadow 0.3s ease,
-      transform 0.15s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.8rem;
-    user-select: none;
-  }
-  button:hover:not(:disabled) {
-    background: #e0dcb9;
-    box-shadow: 0 10px 25px rgba(40, 36, 24, 0.9);
-    transform: scale(1.03);
-  }
-  button:active:not(:disabled) {
-    background: #bcb893;
-    box-shadow: 0 4px 15px rgba(40, 36, 24, 0.9);
-    transform: scale(0.98);
-  }
-  button:disabled {
-    cursor: not-allowed;
-    opacity: 0.65;
-    box-shadow: none;
-    transform: none;
-  }
-
-  .spinner {
-    border: 3px solid var(--color-primary-dark);
-    border-top: 3px solid transparent;
-    border-radius: 50%;
-    width: 24px;
-    height: 24px;
-    animation: spin 1s linear infinite;
-  }
-
-  @keyframes spin {
-    to { transform: rotate(360deg); }
-  }
-
-  /* --- Result area --- */
-  #result {
-    margin-top: 3rem;
-    background: linear-gradient(145deg, #3c3a2f, #2a271e);
-    border-radius: 1.5rem;
-    padding: 2rem;
-    font-family: 'Courier New', Courier, monospace;
-    max-height: 380px;
-    overflow-y: auto;
-    white-space: pre-wrap;
-    word-wrap: break-word;
-    font-size: 1rem;
-    color: var(--color-text-light);
-    box-shadow:
-      inset 0 0 20px #524f40,
-      0 0 25px #8e7d42aa;
-    user-select: text;
-    transition: background-color 0.3s ease;
-    border: 1px solid rgba(205, 199, 176, 0.2);
-  }
-  
-  /* --- Responsive Design --- */
-  @media (max-width: 768px) {
-    .container {
-      padding: 2rem 2.5rem;
-    }
     h1 {
-      font-size: 2rem;
+      text-align: center;
+      font-size: 2.5rem;
+      font-weight: 800;
+      margin-bottom: 0.75rem;
+      color: var(--color-text);
     }
-    button {
-      font-size: 1.2rem;
-      padding: 1.2rem;
-    }
-    #result {
-      margin-top: 2rem;
-    }
-  }
-
-  @media (max-width: 480px) {
-    .container {
-      padding: 1.5rem 1.5rem;
-    }
-    h1 {
-      font-size: 1.7rem;
-      margin-bottom: 2rem;
-    }
-    button {
+    p.subheading {
+      text-align: center;
       font-size: 1.1rem;
-      padding: 1rem;
+      color: var(--color-text-muted);
+      margin-bottom: 2.5rem;
     }
-  }
-</style>
+
+    /* -------- Layout -------- */
+    .wrapper {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      gap: 2rem;
+      max-width: 1200px;
+      margin: 0 auto;
+      transition: transform 0.6s ease;
+    }
+
+    .container {
+      flex: 1;
+      display: grid;
+      gap: 2rem;
+      transition: transform 0.6s ease, opacity 0.6s ease;
+    }
+
+    .container.shift {
+      transform: translateX(-50px);
+    }
+
+    .results-container {
+      flex: 1;
+      display: none;
+      flex-direction: column;
+      gap: 2rem;
+      opacity: 0;
+      transform: translateX(50px);
+      transition: transform 0.6s ease, opacity 0.6s ease;
+    }
+
+    .results-container.show {
+      display: flex;
+      opacity: 1;
+      transform: translateX(0);
+    }
+
+    /* -------- Card -------- */
+    .card {
+      background: var(--color-card);
+      border-radius: var(--radius);
+      padding: 1.75rem;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--color-border);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 28px rgba(0,0,0,0.08);
+    }
+
+    label {
+      font-weight: 600;
+      font-size: 1rem;
+      display: block;
+      margin-bottom: 0.75rem;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 160px;
+      padding: 1rem;
+      border-radius: var(--radius);
+      border: 1px solid var(--color-border);
+      font-size: 1rem;
+      resize: vertical;
+      transition: border 0.2s, box-shadow 0.2s;
+    }
+    textarea:focus {
+      border-color: var(--color-accent);
+      box-shadow: 0 0 0 3px rgba(37,99,235,0.2);
+      outline: none;
+    }
+
+    /* -------- Upload -------- */
+    .upload-box {
+      border: 2px dashed var(--color-border);
+      border-radius: var(--radius);
+      padding: 2.5rem;
+      text-align: center;
+      color: var(--color-text-muted);
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    .upload-box:hover {
+      border-color: var(--color-accent);
+      background: #f0f6ff;
+      color: var(--color-accent);
+    }
+    .upload-box input { display: none; }
+
+    /* -------- Button -------- */
+    button {
+      background: var(--color-accent);
+      color: white;
+      border: none;
+      padding: 1rem 1.75rem;
+      border-radius: var(--radius);
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s ease, transform 0.2s ease;
+    }
+    button:hover {
+      background: var(--color-accent-hover);
+      transform: translateY(-2px);
+    }
+    button:active { transform: translateY(0); }
+
+    /* -------- Result -------- */
+    #tailoredResume {
+      background: #f9fafb;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+      min-height: 140px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 0.95rem;
+      white-space: pre-wrap;
+      overflow-x: auto;
+      line-height: 1.6;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+    .actions button { flex: 1; }
+
+    /* -------- ATS Score -------- */
+    .ats-box h2 { margin-bottom: 0.75rem; }
+    .score-bar {
+      width: 100%;
+      height: 20px;
+      background: #e5e7eb;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .score-fill {
+      height: 100%;
+      background: var(--color-accent);
+      width: 0;
+      transition: width 1.2s ease;
+    }
+    .score-text {
+      margin-top: 0.5rem;
+      font-weight: 600;
+      color: var(--color-text);
+    }
+
+    /* -------- Missing Things -------- */
+    .missing-box h2 { margin-bottom: 0.75rem; color: #dc2626; }
+    .missing-box ul { padding-left: 1.25rem; list-style: disc; color: #374151; }
+
+    /* -------- Feedback Sections -------- */
+    .strengths-box h2 { margin-bottom: 0.75rem; color: #16a34a; }
+    .strengths-box ul { padding-left: 1.25rem; list-style: disc; color: #374151; }
+
+    .suggestions-box h2 { margin-bottom: 0.75rem; color: #2563eb; }
+    .suggestions-box ul { padding-left: 1.25rem; list-style: disc; color: #374151; }
+
+    /* -------- Toast -------- */
+    #message-box {
+      position: fixed;
+      top: 1rem;
+      right: 1rem;
+      background: var(--color-accent);
+      color: white;
+      padding: 0.85rem 1.25rem;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      opacity: 0;
+      transform: translateY(-10px);
+      transition: all 0.3s ease;
+      font-size: 0.95rem;
+      font-weight: 500;
+    }
+    #message-box.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* -------- Responsive -------- */
+    @media (max-width: 768px) {
+      .wrapper { flex-direction: column; }
+      .results-container { display: block; transform: none; opacity: 1; }
+    }
+  </style>
 </head>
 <body>
+  <h1>AI Resume Tailor</h1>
+  <p class="subheading">Upload your resume & paste the job description to get a tailored version instantly.</p>
 
-<div class="container" role="main" aria-label="AI Resume Enhancer Form">
-  <h1>AI Resume Enhancer</h1>
+  <div class="wrapper">
+    <!-- Input side -->
+    <div class="container" id="inputContainer">
+      <div class="card">
+        <label for="resume">Resume</label>
+        <div class="upload-box" onclick="document.getElementById('resume').click()">
+          <p>📄 Drag & drop your resume here, or <span style="color:var(--color-accent); font-weight:600;">browse</span></p>
+          <input type="file" id="resume" accept=".txt,.pdf,.docx">
+        </div>
+      </div>
 
-  <div class="form-grid">
-    <div class="form-group">
-      <input type="file" id="resumeFile" placeholder=" " accept=".pdf,.docx,.doc,.txt" aria-describedby="fileHelp" aria-required="true" />
-      <label for="resumeFile">Upload Your Resume (PDF, DOCX, DOC, TXT)</label>
+      <div class="card">
+        <label for="jobDescription">Job Description</label>
+        <textarea id="jobDescription" placeholder="Paste the job description here..."></textarea>
+      </div>
+
+      <div class="card" style="text-align:center;">
+        <button id="generateBtn" onclick="generateResume()">✨ Generate Tailored Resume</button>
+      </div>
+
+      <!-- Missing in Resume -->
+      <div class="card missing-box" id="missingBox" style="display:none;">
+        <h2>⚠️ Missing in Resume</h2>
+        <ul id="missingList"></ul>
+      </div>
+
+      <!-- Strengths -->
+      <div class="card strengths-box" id="strengthsBox" style="display:none;">
+        <h2>✅ Strengths</h2>
+        <ul id="strengthsList"></ul>
+      </div>
+
+      <!-- Suggestions -->
+      <div class="card suggestions-box" id="suggestionsBox" style="display:none;">
+        <h2>💡 Suggestions</h2>
+        <ul id="suggestionsList"></ul>
+      </div>
     </div>
 
-    <div class="form-group">
-      <textarea id="jobDescription" placeholder=" " rows="5" aria-required="true" aria-describedby="jdHelp"></textarea>
-      <label for="jobDescription">Paste Job Description</label>
+    <!-- Results side -->
+    <div class="results-container" id="resultsContainer">
+      <div class="card">
+        <h2>🎯 Tailored Resume</h2>
+        <div id="tailoredResume"></div>
+        <div class="actions">
+          <button onclick="copyToClipboard()">📋 Copy</button>
+          <button onclick="downloadResume()">⬇️ Download</button>
+        </div>
+      </div>
+
+      <div class="card ats-box">
+        <h2>📊 ATS Score</h2>
+        <div class="score-bar"><div class="score-fill" id="scoreFill"></div></div>
+        <div class="score-text" id="scoreText">Calculating...</div>
+      </div>
     </div>
   </div>
 
-  <button type="button" id="enhanceBtn" onclick="uploadResume()">Enhance Resume</button>
-  
-  <pre id="result" tabindex="0" aria-live="polite" aria-label="Enhanced Resume Result"></pre>
-</div>
+  <!-- Toast -->
+  <div id="message-box"></div>
 
-<script>
-  const enhanceBtn = document.getElementById('enhanceBtn');
-  const fileInput = document.getElementById('resumeFile');
-  const jobDescription = document.getElementById('jobDescription');
-  const result = document.getElementById('result');
+  <script>
+    let enhancedResumeContent = '';
 
-  async function uploadResume() {
-    if (!fileInput.files.length) {
-      alert('Please select a resume file first.');
-      return;
-    }
-    if (!jobDescription.value.trim()) {
-      alert('Please paste the job description.');
-      return;
-    }
+    document.getElementById('resume').addEventListener('change', function() {
+      const fileName = this.files[0] ? this.files[0].name : "No file chosen";
+      document.querySelector('.upload-box p').innerHTML = `📄 ${fileName} <br><span style="color:var(--color-accent); font-weight:600; font-size: 0.9rem;">Click to change</span>`;
+    });
 
-    result.textContent = '';
-    enhanceBtn.disabled = true;
-    enhanceBtn.innerHTML = `Enhancing... <span class="spinner"></span>`;
+    async function generateResume() {
+      const resumeInput = document.getElementById("resume");
+      const jobDesc = document.getElementById("jobDescription").value.trim();
+      const file = resumeInput.files[0];
 
-    try {
+      if (!file) return showMessage("⚠️ Please select your resume file first.");
+      if (!jobDesc) return showMessage("⚠️ Please paste the job description.");
+
       const formData = new FormData();
-      formData.append('file', fileInput.files[0]);
-      const url = `/resume/enhance_resume?job_description=${encodeURIComponent(jobDescription.value.trim())}`;
+      formData.append("file", file);
 
-      const response = await fetch(url, {
-        method: 'POST',
-        body: formData,
-      });
+      const generateBtn = document.getElementById('generateBtn');
+      generateBtn.innerHTML = "⏳ Generating...";
+      generateBtn.disabled = true;
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.detail || 'Failed to enhance resume');
+      try {
+        const response = await fetch(`/resume/enhance_resume?job_description=${encodeURIComponent(jobDesc)}`, {
+          method: "POST",
+          body: formData,
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.detail || `Server error: ${response.status}`);
+        }
+
+        const data = await response.json();
+        enhancedResumeContent = data.enhanced_resume;
+        document.getElementById("tailoredResume").innerText = enhancedResumeContent;
+
+        document.getElementById("resultsContainer").classList.add("show");
+        document.getElementById("inputContainer").classList.add("shift");
+
+        const atsScore = data.ats_score;
+        animateScore(atsScore);
+
+        if (data.feedback) {
+          // Weaknesses (Missing items)
+          if (data.feedback.weaknesses && data.feedback.weaknesses.length > 0) {
+            const missingList = document.getElementById("missingList");
+            missingList.innerHTML = "";
+            data.feedback.weaknesses.forEach(item => {
+              const li = document.createElement("li");
+              li.textContent = item;
+              missingList.appendChild(li);
+            });
+            document.getElementById("missingBox").style.display = "block";
+          } else {
+            document.getElementById("missingBox").style.display = "none";
+          }
+
+          // Strengths
+          if (data.feedback.strengths && data.feedback.strengths.length > 0) {
+            const strengthsList = document.getElementById("strengthsList");
+            strengthsList.innerHTML = "";
+            data.feedback.strengths.forEach(item => {
+              const li = document.createElement("li");
+              li.textContent = item;
+              strengthsList.appendChild(li);
+            });
+            document.getElementById("strengthsBox").style.display = "block";
+          } else {
+            document.getElementById("strengthsBox").style.display = "none";
+          }
+
+          // Suggestions
+          if (data.feedback.suggestions && data.feedback.suggestions.length > 0) {
+            const suggestionsList = document.getElementById("suggestionsList");
+            suggestionsList.innerHTML = "";
+            data.feedback.suggestions.forEach(item => {
+              const li = document.createElement("li");
+              li.textContent = item;
+              suggestionsList.appendChild(li);
+            });
+            document.getElementById("suggestionsBox").style.display = "block";
+          } else {
+            document.getElementById("suggestionsBox").style.display = "none";
+          }
+        }
+
+        showMessage("✅ Resume tailored successfully!");
+
+      } catch (error) {
+        showMessage(`❌ Error: ${error.message}`);
+      } finally {
+        generateBtn.innerHTML = "✨ Generate Tailored Resume";
+        generateBtn.disabled = false;
       }
-
-      const data = await response.json();
-      result.textContent = data.message || JSON.stringify(data, null, 2);
-      result.focus();
-    } catch (err) {
-      alert(`Error: ${err.message}`);
-    } finally {
-      enhanceBtn.disabled = false;
-      enhanceBtn.textContent = 'Enhance Resume';
     }
-  }
-</script>
 
+    function animateScore(score) {
+      const fill = document.getElementById("scoreFill");
+      const text = document.getElementById("scoreText");
+      fill.style.width = "0%";
+      text.innerText = "Calculating...";
+
+      setTimeout(() => {
+        fill.style.width = score + "%";
+        text.innerText = score + "% Match";
+      }, 300);
+    }
+
+    function copyToClipboard() {
+      if (!enhancedResumeContent) return showMessage("⚠️ Nothing to copy yet.");
+      navigator.clipboard.writeText(enhancedResumeContent).then(() => {
+        showMessage("✅ Resume copied to clipboard!");
+      });
+    }
+
+    function downloadResume() {
+      if (!enhancedResumeContent) return showMessage("⚠️ Nothing to download yet.");
+      const blob = new Blob([enhancedResumeContent], { type: "text/plain;charset=utf-8" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = "tailored_resume.txt";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      showMessage("⬇️ Resume downloaded!");
+    }
+
+    function showMessage(msg) {
+      const box = document.getElementById("message-box");
+      box.innerText = msg;
+      box.classList.add("show");
+      setTimeout(() => box.classList.remove("show"), 3000);
+    }
+  </script>
 </body>
 </html>

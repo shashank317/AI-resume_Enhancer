@@ -38,11 +38,14 @@ app.add_middleware(
 # ------------------- API Routes -------------------
 app.include_router(resume_routes.router, prefix="/resume", tags=["resume"])
 
-# ------------------- Serve Frontend -------------------
-# Serve static files (CSS, JS, etc.)
-app.mount("/static", StaticFiles(directory="frontend"), name="static")
+# ------------------- Health Check -------------------
+@app.get("/health", tags=["Health"])
+async def read_root():
+    """A simple health check endpoint."""
+    return {"status": "ok", "message": "AI Resume Enhancer API is running!"}
 
-# Serve index.html at root
-@app.get("/")
-def serve_index():
-    return FileResponse(os.path.join("frontend", "index.html"))
+# ------------------- Serve Frontend -------------------
+# This should come after all other API routes.
+# It serves the frontend application, defaulting to index.html for any path not handled by the API.
+app.mount("/", StaticFiles(directory="frontend", html=True), name="static-frontend")
+app.mount("/", StaticFiles(directory="frontend/dist", html=True), name="static-frontend")

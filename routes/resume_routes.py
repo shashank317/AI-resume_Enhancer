@@ -1,4 +1,4 @@
-from fastapi import APIRouter, File, UploadFile, HTTPException, Query
+from fastapi import APIRouter, File, UploadFile, HTTPException, Form, Query
 from fastapi.responses import FileResponse
 from uuid import uuid4
 from pathlib import Path
@@ -72,9 +72,13 @@ async def enhance_resume(
     else:
         raise HTTPException(status_code=400, detail="Provide either a file or resume_id")
 
-    # Call GPT to enhance
+    # Call Gemini to enhance
     try:
-        enhanced_text = call_gemini_optimize_resume(resume_text, job_description)
+        gemini_response = call_gemini_optimize_resume(resume_text, job_description)
+        enhanced_text = gemini_response.get("enhanced_resume", "")
+        ats_score = gemini_response.get("ats_score", 0)
+        feedback = gemini_response.get("feedback", {})
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Enhancement failed: {str(e)}")
 
@@ -85,8 +89,10 @@ async def enhance_resume(
         await f.write(enhanced_text)
 
     return {
-        "message": enhanced_text,
-        "enhanced_filename": enhanced_filename
+        "enhanced_resume": enhanced_text,
+        "enhanced_filename": enhanced_filename,
+        "ats_score": ats_score,
+        "feedback": feedback
     }
 
 
