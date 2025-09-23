@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+      # Add any required env vars here, do NOT commit secrets to the repo
+      # - GEMINI_API_KEY=your_key_here
+    volumes:
+      - ./:/app

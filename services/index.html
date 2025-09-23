@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modern & Classic UI</title>
+    <style>
+        /* 1. CSS Variables for the New Color Scheme */
+        :root {
+            --bg-color: #f7fafc;
+            --card-bg-color: #ffffff;
+            --primary-text-color: #1a202c;
+            --secondary-text-color: #718096;
+            --accent-color: #2b6cb0;
+            --accent-hover-color: #2c5282;
+            --shadow-color: rgba(0, 0, 0, 0.06);
+            --border-color: #e2e8f0;
+            --font-family-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+        }
+
+        /* 2. General Body & Typographic Styling */
+        body {
+            font-family: var(--font-family-sans);
+            background-color: var(--bg-color);
+            color: var(--primary-text-color);
+            margin: 0;
+            padding: 2rem;
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* 3. Header Styling */
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--primary-text-color);
+            letter-spacing: -0.5px;
+        }
+
+        /* 4. Card Layout & Styling */
+        .card-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background-color: var(--card-bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 4px 6px -1px var(--shadow-color), 0 2px 4px -1px var(--shadow-color);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px var(--shadow-color), 0 4px 6px -2px var(--shadow-color);
+        }
+
+        .card h2 {
+            margin-top: 0;
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--primary-text-color);
+        }
+
+        .card p {
+            color: var(--secondary-text-color);
+            margin-bottom: 1.5rem;
+        }
+
+        /* 5. Button and Interactive Element Styling */
+        .btn,
+        button {
+            display: inline-block;
+            background-color: var(--accent-color);
+            color: #ffffff;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            text-align: center;
+            transition: background-color 0.2s ease, transform 0.2s ease;
+        }
+
+        .btn:hover,
+        button:hover {
+            background-color: var(--accent-hover-color);
+            transform: translateY(-2px);
+        }
+
+        /* 6. General Action Section */
+                .actions {
+            text-align: center;
+            margin-top: 3rem;
+        }
+
+        #drop-zone {
+            border: 2px dashed var(--border-color);
+            border-radius: 12px;
+            padding: 2rem;
+            text-align: center;
+            color: var(--secondary-text-color);
+            margin-top: 2rem;
+            transition: background-color 0.2s ease;
+        }
+    </style>
+    </style>
+</head>
+<body>
+    <header>
+        <h1>My Project Dashboard</h1>
+    </header>
+    <main>
+        <div class="card-container">
+            <article class="card">
+                <h2>Feature One</h2>
+                <p>An overview of the first amazing feature we have just launched. It's designed to improve productivity.</p>
+                <a href="#" class="btn">Learn More</a>
+            </article>
+            <article class="card">
+                <h2>Feature Two</h2>
+                <p>Discover the second feature that complements the first one and opens up new possibilities for your workflow.</p>
+                <a href="#" class="btn">Learn More</a>
+            </article>
+            <article class="card">
+                <h2>Settings</h2>
+                <p>Customize your experience and manage your account preferences in the settings panel.</p>
+                <a href="#" class="btn">Go to Settings</a>
+            </article>
+        </div>
+        <div class="actions">
+            <button id="main-action-btn">Perform Action</button>
+        </div>
+        <div id="drop-zone">Drop files here</div>
+    </main>
+    <script>
+        // This JavaScript is for demonstrating functionality and is not affected by the style changes.
+        document.getElementById('main-action-btn').addEventListener('click', () => {
+            alert('Action Performed!');
+        });
+
+        const dropZone = document.getElementById('drop-zone');
+
+        dropZone.addEventListener('dragover', (event) => {
+            event.preventDefault();
+            dropZone.style.backgroundColor = '#e9e9e9';
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.style.backgroundColor = '#f7fafc';
+        });
+
+        dropZone.addEventListener('drop', (event) => {
+            event.preventDefault();
+            dropZone.style.backgroundColor = '#f7fafc';
+            const files = event.dataTransfer.files;
+            if (files.length > 0) {
+                // Handle the dropped files
+                console.log(files[0].name);
+                alert(`File dropped: ${files[0].name}`);
+            }
+        });
+    </script>
+</body>
+</html>

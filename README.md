@@ -4,18 +4,28 @@ A web application that enhances resumes using the Google Gemini API, tailoring t
 
 ## Features
 
-*   Upload resumes in various formats (PDF, DOCX, DOC, TXT).
-*   Provide a job description for targeted enhancement.
-*   Receive an AI-optimized resume tailored to the job description.
-*   Download enhanced resumes.
-*   Copy enhanced resume text to clipboard.
+*   Upload resumes in PDF, DOCX, DOC, and TXT formats.
+*   Enhance resumes based on a provided job description using AI.
+*   Receive an ATS (Applicant Tracking System) score for your resume against the job description.
+*   Get detailed feedback on your resume's content and formatting.
+*   Download the enhanced resume.
+*   Copy the enhanced resume to the clipboard.
 
 ## Technologies Used
 
 *   **Backend**: FastAPI (Python)
-*   **Frontend**: HTML, CSS, JavaScript
+*   **Frontend**: React (JavaScript), Three.js, postprocessing, jspdf
 *   **AI**: Google Gemini API
 *   **Other Python Libraries**: `uvicorn`, `PyMuPDF`, `python-docx`, `python-dotenv`, `aiofiles`, `python-multipart`, `pytest`, `pytest-asyncio`, `httpx`
+
+## API Endpoints
+
+The backend provides the following endpoints:
+
+*   `POST /resume/upload_resume`: Upload a resume file.
+*   `POST /resume/enhance_resume`: Enhance a resume using either a newly uploaded file or a previously uploaded one.
+*   `GET /resume/download/{filename}`: Download an enhanced resume.
+*   `GET /health`: Health check endpoint.
 
 ## Setup and Installation (Local)
 

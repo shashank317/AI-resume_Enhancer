@@ -1,440 +1,1210 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AI Resume Tailor</title>
-  <style>
-    /* -------- Base Styles -------- */
-    :root {
-      --color-bg: #f9fafb;
-      --color-card: #ffffff;
-      --color-border: #e5e7eb;
-      --color-text: #111827;
-      --color-text-muted: #6b7280;
-      --color-accent: #2563eb;
-      --color-accent-hover: #1d4ed8;
-      --radius: 1rem;
-      --shadow: 0 8px 24px rgba(0,0,0,0.06);
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Resume Tailor</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js is no longer needed for the new design, but keeping it in case other features use it -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        
+        :root {
+            /* Light Theme Variables (user palette) */
+            --bg-body: #F5FAE1;    /* very light */
+            --bg-card: #EEE6CA;    /* card background */
+            --text-primary: #896C6C; /* primary text / accent */
+            --text-secondary: #E5BEB5; /* secondary text */
+            --accent: #896C6C; /* main accent */
+            --accent-hover: #E5BEB5; /* accent hover */
+            --border-color: #E5BEB5;
+            --accent-rgb: 137,108,108; /* used for subtle backgrounds */
+            --ats-accent: var(--accent);
+        }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+        .dark-theme {
+            /* Dark Theme Variables (user dark palette) */
+            --bg-body: #222831;
+            --bg-card: #393E46;
+            --text-primary: #DFD0B8;
+            --text-secondary: #948979;
+            --accent: #948979;
+            --accent-hover: #DFD0B8;
+            --border-color: #393E46;
+            --accent-rgb: 148,137,121;
+            --ats-accent: var(--accent);
+        }
 
-    body {
-      font-family: "Inter", system-ui, sans-serif;
-      background: var(--color-bg);
-      color: var(--color-text);
-      line-height: 1.7;
-      padding: 2rem;
-      overflow-x: hidden;
-    }
+          /* Dark-theme element overrides for common elements and Tailwind utilities
+              Use body.dark-theme because the theme class is applied to the body element */
+          body.dark-theme { background-color: var(--bg-body) !important; color: var(--text-primary) !important; }
+          body.dark-theme .bg-gray-50, body.dark-theme .bg-white { background-color: var(--bg-body) !important; }
+          body.dark-theme header, body.dark-theme .card, body.dark-theme .bg-white { background-color: var(--bg-card) !important; border-color: var(--border-color) !important; }
+          body.dark-theme .text-gray-800, body.dark-theme .text-gray-900, body.dark-theme .text-primary { color: var(--text-primary) !important; }
+          body.dark-theme .text-gray-600, body.dark-theme .text-gray-700, body.dark-theme .text-secondary { color: var(--text-secondary) !important; }
+          body.dark-theme .border-gray-200 { border-color: var(--border-color) !important; }
+          body.dark-theme .shadow-lg { box-shadow: 0 6px 18px rgba(0,0,0,0.45) !important; }
+          body.dark-theme .card { background-color: var(--bg-card) !important; }
+          body.dark-theme .upload-box { background-color: rgba(255,255,255,0.02); border-color: var(--border-color); color: var(--text-secondary); }
+          body.dark-theme .secondary-btn { background-color: var(--bg-card); color: var(--text-primary); border-color: var(--border-color); }
+          body.dark-theme .action-btn { background-color: var(--accent); color: var(--text-primary); }
+          body.dark-theme .skeleton { background-color: rgba(255,255,255,0.04); }
+          body.dark-theme .inline-ats-ring { background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.06)); }
+          body.dark-theme .bg-gray-100, body.dark-theme .bg-gray-200 { background-color: rgba(255,255,255,0.02) !important; }
+          body.dark-theme .bg-gray-800 { background-color: #2a2f33 !important; }
+          body.dark-theme .text-teal-600, body.dark-theme .text-teal-500 { color: var(--accent) !important; }
+          body.dark-theme .hover\:bg-teal-700:hover { background-color: var(--accent-hover) !important; }
 
-    h1 {
-      text-align: center;
-      font-size: 2.5rem;
-      font-weight: 800;
-      margin-bottom: 0.75rem;
-      color: var(--color-text);
-    }
-    p.subheading {
-      text-align: center;
-      font-size: 1.1rem;
-      color: var(--color-text-muted);
-      margin-bottom: 2.5rem;
-    }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-primary);
+            transition: background-color 0.3s, color 0.3s;
+        }
 
-    /* -------- Layout -------- */
-    .wrapper {
-      display: flex;
-      justify-content: center;
-      align-items: flex-start;
-      gap: 2rem;
-      max-width: 1200px;
-      margin: 0 auto;
-      transition: transform 0.6s ease;
-    }
+        .card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            transition: transform 0.3s ease, box-shadow 0.3s ease, background-color 0.3s, border-color 0.3s;
+        }
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
 
-    .container {
-      flex: 1;
-      display: grid;
-      gap: 2rem;
-      transition: transform 0.6s ease, opacity 0.6s ease;
-    }
+        /* Custom Styles for Components */
+        .upload-box {
+            border-color: var(--border-color);
+            background-color: var(--bg-body);
+            color: var(--text-secondary);
+            transition: all 0.3s;
+        }
+        .upload-box:hover {
+            border-color: var(--accent);
+            background-color: rgba(13, 148, 136, 0.05);
+        }
+        
+        .dark-theme .upload-box:hover {
+            background-color: rgba(45, 212, 191, 0.05);
+        }
 
-    .container.shift {
-      transform: translateX(-50px);
-    }
+        .action-btn {
+            background-color: var(--accent);
+            transition: all 0.3s;
+        }
+        .action-btn:hover {
+            background-color: var(--accent-hover);
+            transform: translateY(-2px);
+        }
+        
+        .secondary-btn {
+            background-color: var(--bg-body);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            transition: all 0.3s;
+        }
+        .secondary-btn:hover {
+            background-color: var(--accent);
+            color: #fff;
+            border-color: var(--accent);
+        }
 
-    .results-container {
-      flex: 1;
-      display: none;
-      flex-direction: column;
-      gap: 2rem;
-      opacity: 0;
-      transform: translateX(50px);
-      transition: transform 0.6s ease, opacity 0.6s ease;
-    }
+        .feedback-box {
+            border-left: 4px solid;
+            background-color: var(--bg-card);
+        }
+        .feedback-box.strengths { border-color: #10b981; }
+        .feedback-box.missing { border-color: #f59e0b; }
+        .feedback-box.suggestions { border-color: var(--accent); }
 
-    .results-container.show {
-      display: flex;
-      opacity: 1;
-      transform: translateX(0);
-    }
+        .feedback-box li {
+            background-color: var(--bg-body);
+            color: var(--text-secondary);
+        }
 
-    /* -------- Card -------- */
-    .card {
-      background: var(--color-card);
-      border-radius: var(--radius);
-      padding: 1.75rem;
-      box-shadow: var(--shadow);
-      border: 1px solid var(--color-border);
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
-    }
-    .card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 10px 28px rgba(0,0,0,0.08);
-    }
+        .highlighted-keyword {
+            background-color: rgba(253, 230, 138, 0.8);
+            color: #1f2937;
+            font-weight: 600;
+            padding: 2px 4px;
+            border-radius: 4px;
+        }
 
-    label {
-      font-weight: 600;
-      font-size: 1rem;
-      display: block;
-      margin-bottom: 0.75rem;
-    }
+        .dark-theme .highlighted-keyword {
+            background-color: rgba(251, 191, 36, 0.8);
+            color: #1f2937;
+        }
 
-    textarea {
-      width: 100%;
-      min-height: 160px;
-      padding: 1rem;
-      border-radius: var(--radius);
-      border: 1px solid var(--color-border);
-      font-size: 1rem;
-      resize: vertical;
-      transition: border 0.2s, box-shadow 0.2s;
-    }
-    textarea:focus {
-      border-color: var(--color-accent);
-      box-shadow: 0 0 0 3px rgba(37,99,235,0.2);
-      outline: none;
-    }
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: var(--accent);
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
 
-    /* -------- Upload -------- */
-    .upload-box {
-      border: 2px dashed var(--color-border);
-      border-radius: var(--radius);
-      padding: 2.5rem;
-      text-align: center;
-      color: var(--color-text-muted);
-      cursor: pointer;
-      transition: all 0.3s ease;
-    }
-    .upload-box:hover {
-      border-color: var(--color-accent);
-      background: #f0f6ff;
-      color: var(--color-accent);
-    }
-    .upload-box input { display: none; }
+        .skeleton {
+            background-color: var(--border-color);
+            border-radius: 4px;
+            animation: pulse 1.5s infinite ease-in-out;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
 
-    /* -------- Button -------- */
-    button {
-      background: var(--color-accent);
-      color: white;
-      border: none;
-      padding: 1rem 1.75rem;
-      border-radius: var(--radius);
-      font-size: 1rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background 0.2s ease, transform 0.2s ease;
-    }
-    button:hover {
-      background: var(--color-accent-hover);
-      transform: translateY(-2px);
-    }
-    button:active { transform: translateY(0); }
+        /* Inline ATS small badge shown in place of the generate button after results */
+        .inline-ats {
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+        .inline-ats-ring {
+            width: 64px;
+            height: 64px;
+            border-radius: 9999px;
+            border: 6px solid var(--ats-accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.02));
+            color: var(--ats-score-color, var(--text-primary));
+            font-weight: 700;
+            font-size: 1rem;
+            transition: transform 0.35s ease, border-color 0.25s ease;
+        }
+        .inline-ats-ring.good { border-color: #10b981; }
+        .inline-ats-ring.warn { border-color: #f59e0b; }
+        .inline-ats-ring.bad { border-color: #ef4444; }
+        .inline-ats-label { font-size: 0.8rem; color: var(--text-secondary); }
+        
+        /* New ATS Score Design Styles */
+        .ats-breakdown-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem; /* 12px */
+        }
 
-    /* -------- Result -------- */
-    #tailoredResume {
-      background: #f9fafb;
-      border: 1px solid var(--color-border);
-      border-radius: var(--radius);
-      padding: 1.25rem;
-      min-height: 140px;
-      font-family: "JetBrains Mono", monospace;
-      font-size: 0.95rem;
-      white-space: pre-wrap;
-      overflow-x: auto;
-      line-height: 1.6;
-    }
+        .ats-progress-bar-bg {
+            flex-grow: 1;
+            background-color: var(--border-color);
+            border-radius: 9999px;
+            height: 8px;
+            overflow: hidden;
+        }
 
-    .actions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 1rem;
-      margin-top: 1rem;
-    }
-    .actions button { flex: 1; }
+        .ats-progress-bar {
+            height: 100%;
+            background-color: var(--accent);
+            border-radius: 9999px;
+            width: 0%;
+            transition: width 1s ease-out;
+        }
 
-    /* -------- ATS Score -------- */
-    .ats-box h2 { margin-bottom: 0.75rem; }
-    .score-bar {
-      width: 100%;
-      height: 20px;
-      background: #e5e7eb;
-      border-radius: 999px;
-      overflow: hidden;
-    }
-    .score-fill {
-      height: 100%;
-      background: var(--color-accent);
-      width: 0;
-      transition: width 1.2s ease;
-    }
-    .score-text {
-      margin-top: 0.5rem;
-      font-weight: 600;
-      color: var(--color-text);
-    }
+        /* Map commonly used Tailwind teal utility classes to the new palette so existing markup stays consistent */
+        .text-teal-600 { color: var(--accent) !important; }
+        .text-teal-500 { color: var(--accent) !important; }
+        .text-teal-400 { color: var(--text-secondary) !important; }
+        .bg-teal-600 { background-color: var(--accent) !important; }
+        .bg-teal-100 { background-color: rgba(var(--accent-rgb), 0.12) !important; }
+        .hover\:bg-teal-700:hover { background-color: var(--accent-hover) !important; }
+        .hover\:text-teal-600:hover { color: var(--accent) !important; }
+        .text-teal-300 { color: rgba(var(--accent-rgb), 0.6) !important; }
 
-    /* -------- Missing Things -------- */
-    .missing-box h2 { margin-bottom: 0.75rem; color: #dc2626; }
-    .missing-box ul { padding-left: 1.25rem; list-style: disc; color: #374151; }
-
-    /* -------- Feedback Sections -------- */
-    .strengths-box h2 { margin-bottom: 0.75rem; color: #16a34a; }
-    .strengths-box ul { padding-left: 1.25rem; list-style: disc; color: #374151; }
-
-    .suggestions-box h2 { margin-bottom: 0.75rem; color: #2563eb; }
-    .suggestions-box ul { padding-left: 1.25rem; list-style: disc; color: #374151; }
-
-    /* -------- Toast -------- */
-    #message-box {
-      position: fixed;
-      top: 1rem;
-      right: 1rem;
-      background: var(--color-accent);
-      color: white;
-      padding: 0.85rem 1.25rem;
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      opacity: 0;
-      transform: translateY(-10px);
-      transition: all 0.3s ease;
-      font-size: 0.95rem;
-      font-weight: 500;
-    }
-    #message-box.show {
-      opacity: 1;
-      transform: translateY(0);
-    }
-
-    /* -------- Responsive -------- */
-    @media (max-width: 768px) {
-      .wrapper { flex-direction: column; }
-      .results-container { display: block; transform: none; opacity: 1; }
-    }
-  </style>
+    </style>
 </head>
-<body>
-  <h1>AI Resume Tailor</h1>
-  <p class="subheading">Upload your resume & paste the job description to get a tailored version instantly.</p>
-
-  <div class="wrapper">
-    <!-- Input side -->
-    <div class="container" id="inputContainer">
-      <div class="card">
-        <label for="resume">Resume</label>
-        <div class="upload-box" onclick="document.getElementById('resume').click()">
-          <p>📄 Drag & drop your resume here, or <span style="color:var(--color-accent); font-weight:600;">browse</span></p>
-          <input type="file" id="resume" accept=".txt,.pdf,.docx">
+<body class="bg-gray-50 text-gray-800 transition-colors duration-300">
+    <!-- Header -->
+    <header class="sticky top-0 z-50 shadow-md transition-colors duration-300 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+            <a href="/" class="text-2xl font-bold text-teal-600 transition-colors duration-300">
+                <span class="bg-teal-600 text-white rounded-md px-2 py-1 mr-1 transition-colors duration-300">AI</span>Resume Tailor
+            </a>
+            <div class="flex items-center space-x-4">
+                <button id="theme-toggle" class="p-2 rounded-full hover:bg-gray-200 transition-colors duration-200 focus:outline-none">
+                    <svg id="moon-icon" class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+                    </svg>
+                    <svg id="sun-icon" class="w-6 h-6 text-gray-600 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                    </svg>
+                </button>
+                <button id="historyBtn" class="p-2 rounded-full hover:bg-gray-200 transition-colors duration-200 focus:outline-none">
+                    <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.5v11M12 20a8 8 0 100-16 8 8 0 000 16zM15 12h-6"></path>
+                    </svg>
+                </button>
+                <a href="#features" class="text-gray-600 hover:text-teal-600 transition-colors duration-200 hidden md:inline-block">Features</a>
+                <a href="#demo" class="text-gray-600 hover:text-teal-600 transition-colors duration-200 hidden md:inline-block">Demo</a>
+                <a href="#" class="bg-teal-600 text-white px-5 py-2 rounded-lg font-medium hover:bg-teal-700 transition-colors duration-200 shadow-md hidden md:inline-block">Open App</a>
+            </div>
         </div>
-      </div>
+    </header>
 
-      <div class="card">
-        <label for="jobDescription">Job Description</label>
-        <textarea id="jobDescription" placeholder="Paste the job description here..."></textarea>
-      </div>
-
-      <div class="card" style="text-align:center;">
-        <button id="generateBtn" onclick="generateResume()">✨ Generate Tailored Resume</button>
-      </div>
-
-      <!-- Missing in Resume -->
-      <div class="card missing-box" id="missingBox" style="display:none;">
-        <h2>⚠️ Missing in Resume</h2>
-        <ul id="missingList"></ul>
-      </div>
-
-      <!-- Strengths -->
-      <div class="card strengths-box" id="strengthsBox" style="display:none;">
-        <h2>✅ Strengths</h2>
-        <ul id="strengthsList"></ul>
-      </div>
-
-      <!-- Suggestions -->
-      <div class="card suggestions-box" id="suggestionsBox" style="display:none;">
-        <h2>💡 Suggestions</h2>
-        <ul id="suggestionsList"></ul>
-      </div>
+    <div id="historyPanel" class="fixed top-0 left-0 w-80 h-full z-50 bg-white shadow-xl transform -translate-x-full transition-transform duration-300">
+        <div class="flex items-center justify-between p-4 border-b border-gray-200">
+            <h2 class="text-xl font-semibold">Tailoring History</h2>
+            <button id="closeHistoryBtn" class="text-gray-500 hover:text-gray-800">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+        <ul id="historyList" class="p-4 space-y-4 overflow-y-auto h-[calc(100%-65px)]"></ul>
     </div>
 
-    <!-- Results side -->
-    <div class="results-container" id="resultsContainer">
-      <div class="card">
-        <h2>🎯 Tailored Resume</h2>
-        <div id="tailoredResume"></div>
-        <div class="actions">
-          <button onclick="copyToClipboard()">📋 Copy</button>
-          <button onclick="downloadResume()">⬇️ Download</button>
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Hero Section Title -->
+        <section class="text-center my-12">
+            <h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-tight tracking-tight mb-4 text-primary">AI Resume Tailor</h1>
+            <p class="text-lg sm:text-xl text-secondary">Elevate your resume. Beat the bots. Land the interview.</p>
+        </section>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Input & Actions Section -->
+            <div class="space-y-6">
+                <div class="card p-6 rounded-2xl shadow-lg">
+                    <label for="resume" class="block text-lg font-semibold mb-2 text-primary">1. Upload Your Resume</label>
+                    <div id="uploadBox" class="upload-box flex flex-col items-center justify-center p-12 rounded-xl border-2 border-dashed cursor-pointer">
+                        <input type="file" id="resume" accept=".txt,.pdf,.docx" hidden>
+                        <span>📄 Drag & drop or click to upload</span>
+                        <ul class="file-list list-none text-sm mt-4 w-full" id="fileList"></ul>
+                    </div>
+                </div>
+
+                <div class="card p-6 rounded-2xl shadow-lg">
+                    <label for="jobDescription" class="block text-lg font-semibold mb-2 text-primary">2. Paste Job Description</label>
+                    <textarea id="jobDescription" rows="10" placeholder="Paste the job description..." class="w-full p-4 rounded-lg outline-none text-sm border-2 focus:border-teal-600 transition-colors bg-gray-50 text-gray-800"></textarea>
+                </div>
+                
+                <div class="card p-6 rounded-2xl shadow-lg text-center">
+                    <div id="generateArea" class="w-full">
+                        <button id="generateBtn" class="action-btn text-white px-10 py-4 rounded-lg font-semibold text-lg hover:bg-teal-700 transition-colors duration-200 shadow-xl w-full">🔎 Analyze JD</button>
+                    </div>
+                </div>
+
+                <div class="card p-6 rounded-2xl shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-primary">✨ AI Features</h2>
+                    <div class="flex flex-col sm:flex-row gap-4">
+                        <button id="summarizeBtn" class="secondary-btn flex-1 px-6 py-3 rounded-lg font-semibold">Summarize</button>
+                        <button id="coverLetterBtn" class="secondary-btn flex-1 px-6 py-3 rounded-lg font-semibold">Cover Letter</button>
+                        <button id="questionsBtn" class="secondary-btn flex-1 px-6 py-3 rounded-lg font-semibold">Interview Questions</button>
+                    </div>
+                    <div id="geminiOutputContainer" class="hidden mt-4">
+                        <h3 id="geminiOutputTitle" class="text-lg font-semibold mb-2 text-primary"></h3>
+                        <div id="geminiOutput" class="ai-feature-output p-4 rounded-lg bg-gray-50 border-2 text-sm text-gray-600"></div>
+                        <div id="geminiOutputSkeleton" class="skeleton h-40 mt-4 hidden"></div>
+                    </div>
+                </div>
+
+                <!-- Feedback Section -->
+                <div id="feedbackContainer" class="space-y-4">
+                    <div class="feedback-box strengths card rounded-2xl p-6 hidden" id="strengthsBox">
+                        <h3 class="text-lg font-semibold mb-2 text-primary">✅ Strengths</h3>
+                        <ul id="strengthsList" class="list-none space-y-2"></ul>
+                    </div>
+                    <div class="feedback-box missing card rounded-2xl p-6 hidden" id="missingBox">
+                        <h3 class="text-lg font-semibold mb-2 text-primary">⚠️ Missing Keywords</h3>
+                        <ul id="missingList" class="list-none space-y-2"></ul>
+                    </div>
+                    <div class="feedback-box suggestions card rounded-2xl p-6 hidden" id="suggestionsBox">
+                        <h3 class="text-lg font-semibold mb-2 text-primary">💡 Smart Suggestions</h3>
+                        <ul id="suggestionsList" class="list-none space-y-2"></ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Results Section -->
+            <div class="space-y-6">
+                <div class="card p-6 rounded-2xl shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-primary">🎯 Tailored Resume</h2>
+                    <div id="tailoredResumeContent" class="text-sm leading-relaxed whitespace-pre-wrap p-4 rounded-lg bg-gray-50 border-2 text-gray-600"></div>
+                    <div id="resumeSkeleton" class="p-4 hidden">
+                        <div class="skeleton h-6 w-3/4 mb-4"></div>
+                        <div class="skeleton h-4 w-full mb-2"></div>
+                        <div class="skeleton h-4 w-11/12 mb-2"></div>
+                        <div class="skeleton h-4 w-5/6 mb-2"></div>
+                        <div class="skeleton h-4 w-3/4"></div>
+                    </div>
+                    <div class="flex flex-wrap gap-4 mt-4">
+                        <button id="copyBtn" class="secondary-btn flex-1 px-6 py-3 rounded-lg font-semibold">📋 Copy Text</button>
+                        <button id="downloadPdfBtn" class="secondary-btn flex-1 px-6 py-3 rounded-lg font-semibold">📄 Download PDF</button>
+                        <button id="downloadDocxBtn" class="secondary-btn flex-1 px-6 py-3 rounded-lg font-semibold">💼 Download DOCX</button>
+                    </div>
+                </div>
+
+                <!-- Redesigned ATS Score Section -->
+                <div class="card p-6 rounded-2xl shadow-lg">
+                    <h2 class="text-xl font-semibold mb-6 text-primary flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2 text-teal-500"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"></path></svg>
+                        ATS Match Score
+                    </h2>
+                    <div id="atsScoreContainer" class="flex flex-col md:flex-row items-center gap-6 hidden">
+                        <!-- Gauge -->
+                        <div class="relative w-40 h-40 flex-shrink-0">
+                            <svg class="w-full h-full" viewBox="0 0 36 36" transform="rotate(-90)">
+                                <path class="stroke-current text-gray-200 dark:text-gray-700"
+                                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                                    fill="none" stroke-width="3" />
+                                <path id="atsScoreCircle"
+                                    class="stroke-current transition-all duration-1000 ease-out"
+                                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                                    fill="none" stroke-width="3" stroke-dasharray="100, 100" stroke-dashoffset="100" stroke-linecap="round" />
+                            </svg>
+                            <div class="absolute inset-0 flex flex-col items-center justify-center">
+                                <span id="atsScoreText" class="text-4xl font-bold text-primary">0%</span>
+                                <span id="atsScoreRating" class="text-sm font-medium text-secondary mt-1"></span>
+                            </div>
+                        </div>
+                        <!-- Breakdown -->
+                        <div id="atsBreakdownContainer" class="w-full flex-1 space-y-3">
+                            <!-- Items will be injected by JS -->
+                        </div>
+                    </div>
+                    <div id="atsSkeleton" class="hidden">
+                        <div class="flex flex-col md:flex-row items-center gap-6">
+                            <div class="w-40 h-40 rounded-full skeleton flex-shrink-0"></div>
+                            <div class="w-full flex-1 space-y-4">
+                                <div class="h-8 w-full skeleton"></div>
+                                <div class="h-8 w-full skeleton"></div>
+                                <div class="h-8 w-full skeleton"></div>
+                                <div class="h-8 w-full skeleton"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
         </div>
-      </div>
+    </main>
 
-      <div class="card ats-box">
-        <h2>📊 ATS Score</h2>
-        <div class="score-bar"><div class="score-fill" id="scoreFill"></div></div>
-        <div class="score-text" id="scoreText">Calculating...</div>
-      </div>
-    </div>
-  </div>
+    <!-- Toast Message -->
+    <div id="message-box" class="fixed bottom-6 right-6 px-6 py-3 rounded-lg shadow-lg font-medium text-white transition-opacity duration-300 opacity-0 transform translate-y-4"></div>
 
-  <!-- Toast -->
-  <div id="message-box"></div>
+    <script>
+        const themeToggle = document.getElementById('theme-toggle');
+        const moonIcon = document.getElementById('moon-icon');
+        const sunIcon = document.getElementById('sun-icon');
+        const body = document.body;
 
-  <script>
-    let enhancedResumeContent = '';
+        const generateBtn = document.getElementById('generateBtn');
+        const summarizeBtn = document.getElementById('summarizeBtn');
+        const coverLetterBtn = document.getElementById('coverLetterBtn');
+        const questionsBtn = document.getElementById('questionsBtn');
+        const historyBtn = document.getElementById('historyBtn');
+        const historyPanel = document.getElementById('historyPanel');
+        const closeHistoryBtn = document.getElementById('closeHistoryBtn');
+        const historyList = document.getElementById('historyList');
 
-    document.getElementById('resume').addEventListener('change', function() {
-      const fileName = this.files[0] ? this.files[0].name : "No file chosen";
-      document.querySelector('.upload-box p').innerHTML = `📄 ${fileName} <br><span style="color:var(--color-accent); font-weight:600; font-size: 0.9rem;">Click to change</span>`;
-    });
+        const resumeInput = document.getElementById('resume');
+        const uploadBox = document.getElementById('uploadBox');
+        const jobDescInput = document.getElementById('jobDescription');
+        const tailoredResumeContent = document.getElementById('tailoredResumeContent');
+        const strengthsBox = document.getElementById('strengthsBox');
+        const missingBox = document.getElementById('missingBox');
+        const suggestionsBox = document.getElementById('suggestionsBox');
+        const strengthsList = document.getElementById('strengthsList');
+        const missingList = document.getElementById('missingList');
+        const suggestionsList = document.getElementById('suggestionsList');
+        const fileList = document.getElementById('fileList');
+        const geminiOutputContainer = document.getElementById('geminiOutputContainer');
+        const geminiOutputTitle = document.getElementById('geminiOutputTitle');
+        const geminiOutput = document.getElementById('geminiOutput');
+        const geminiOutputSkeleton = document.getElementById('geminiOutputSkeleton');
+        const resumeSkeleton = document.getElementById('resumeSkeleton');
+        
+        const atsScoreContainer = document.getElementById('atsScoreContainer');
+        const atsSkeleton = document.getElementById('atsSkeleton');
+        
+        let tailoredResumeText = '';
+        
+		// Backend endpoints (keep API key only on server)
+		const BACKEND_GENERATE_URL = '/resume/generate';
+		const BACKEND_ENHANCE_UPLOAD_URL = '/resume/enhance_resume';
 
-    async function generateResume() {
-      const resumeInput = document.getElementById("resume");
-      const jobDesc = document.getElementById("jobDescription").value.trim();
-      const file = resumeInput.files[0];
-
-      if (!file) return showMessage("⚠️ Please select your resume file first.");
-      if (!jobDesc) return showMessage("⚠️ Please paste the job description.");
-
-      const formData = new FormData();
-      formData.append("file", file);
-
-      const generateBtn = document.getElementById('generateBtn');
-      generateBtn.innerHTML = "⏳ Generating...";
-      generateBtn.disabled = true;
-
-      try {
-        const response = await fetch(`/resume/enhance_resume?job_description=${encodeURIComponent(jobDesc)}`, {
-          method: "POST",
-          body: formData,
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            setTheme(savedTheme);
+            loadHistory();
         });
 
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.detail || `Server error: ${response.status}`);
+        themeToggle.addEventListener('click', () => {
+            const currentTheme = body.classList.contains('dark-theme') ? 'light' : 'dark';
+            setTheme(currentTheme);
+        });
+        
+        historyBtn.addEventListener('click', () => {
+            historyPanel.classList.toggle('translate-x-0');
+        });
+        
+        closeHistoryBtn.addEventListener('click', () => {
+            historyPanel.classList.remove('translate-x-0');
+        });
+
+        function setTheme(theme) {
+            if (theme === 'dark') {
+                body.classList.add('dark-theme');
+                body.classList.remove('light-theme');
+                moonIcon.classList.add('hidden');
+                sunIcon.classList.remove('hidden');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                body.classList.add('light-theme');
+                body.classList.remove('dark-theme');
+                moonIcon.classList.remove('hidden');
+                sunIcon.classList.add('hidden');
+                localStorage.setItem('theme', 'light');
+            }
         }
 
-        const data = await response.json();
-        enhancedResumeContent = data.enhanced_resume;
-        document.getElementById("tailoredResume").innerText = enhancedResumeContent;
+        uploadBox.addEventListener('click', () => resumeInput.click());
+        resumeInput.addEventListener('change', handleFileSelect);
+        ['dragover', 'dragleave', 'drop'].forEach(eventName => {
+            uploadBox.addEventListener(eventName, handleDragDrop, false);
+        });
 
-        document.getElementById("resultsContainer").classList.add("show");
-        document.getElementById("inputContainer").classList.add("shift");
+    generateBtn.addEventListener('click', handleAnalyzeClick);
+    summarizeBtn.addEventListener('click', handleSummarizeClick);
+        coverLetterBtn.addEventListener('click', () => handleGeminiFeature('Draft Cover Letter', draftCoverLetter));
+        questionsBtn.addEventListener('click', () => handleGeminiFeature('Interview Questions', generateQuestions));
+        
+        document.getElementById('copyBtn').addEventListener('click', copyToClipboard);
+        document.getElementById('downloadPdfBtn').addEventListener('click', downloadAsPDF);
+        document.getElementById('downloadDocxBtn').addEventListener('click', downloadAsDOCX);
 
-        const atsScore = data.ats_score;
-        animateScore(atsScore);
-
-        if (data.feedback) {
-          // Weaknesses (Missing items)
-          if (data.feedback.weaknesses && data.feedback.weaknesses.length > 0) {
-            const missingList = document.getElementById("missingList");
-            missingList.innerHTML = "";
-            data.feedback.weaknesses.forEach(item => {
-              const li = document.createElement("li");
-              li.textContent = item;
-              missingList.appendChild(li);
-            });
-            document.getElementById("missingBox").style.display = "block";
-          } else {
-            document.getElementById("missingBox").style.display = "none";
-          }
-
-          // Strengths
-          if (data.feedback.strengths && data.feedback.strengths.length > 0) {
-            const strengthsList = document.getElementById("strengthsList");
-            strengthsList.innerHTML = "";
-            data.feedback.strengths.forEach(item => {
-              const li = document.createElement("li");
-              li.textContent = item;
-              strengthsList.appendChild(li);
-            });
-            document.getElementById("strengthsBox").style.display = "block";
-          } else {
-            document.getElementById("strengthsBox").style.display = "none";
-          }
-
-          // Suggestions
-          if (data.feedback.suggestions && data.feedback.suggestions.length > 0) {
-            const suggestionsList = document.getElementById("suggestionsList");
-            suggestionsList.innerHTML = "";
-            data.feedback.suggestions.forEach(item => {
-              const li = document.createElement("li");
-              li.textContent = item;
-              suggestionsList.appendChild(li);
-            });
-            document.getElementById("suggestionsBox").style.display = "block";
-          } else {
-            document.getElementById("suggestionsBox").style.display = "none";
-          }
+        function handleFileSelect(e) {
+            const files = Array.from(e.target.files || []);
+            if (files.length > 0) {
+                renderFileList(files);
+            }
         }
 
-        showMessage("✅ Resume tailored successfully!");
+        function handleDragDrop(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            if (e.type === 'dragover') {
+                uploadBox.classList.add('bg-gray-100', 'dark:bg-gray-800');
+            } else if (e.type === 'dragleave') {
+                uploadBox.classList.remove('bg-gray-100', 'dark:bg-gray-800');
+            } else if (e.type === 'drop') {
+                uploadBox.classList.remove('bg-gray-100', 'dark:bg-gray-800');
+                const files = Array.from(e.dataTransfer.files || []);
+                if (files.length > 0) {
+                    const dt = new DataTransfer();
+                    files.forEach(f => dt.items.add(f));
+                    resumeInput.files = dt.files;
+                    renderFileList(Array.from(resumeInput.files));
+                }
+            }
+        }
 
-      } catch (error) {
-        showMessage(`❌ Error: ${error.message}`);
-      } finally {
-        generateBtn.innerHTML = "✨ Generate Tailored Resume";
-        generateBtn.disabled = false;
-      }
-    }
+        function renderFileList(files) {
+            fileList.innerHTML = '';
+            if (files.length > 0) {
+                files.forEach((f, idx) => {
+                    const li = document.createElement('li');
+                    li.className = 'flex items-center justify-between p-2 rounded-lg bg-gray-100 dark:bg-gray-700 mt-2';
+                    li.innerHTML = `
+                        <span class="truncate">${f.name}</span>
+                        <button class="remove-file ml-2 text-red-500 hover:text-red-700" data-index="${idx}">✖</button>
+                    `;
+                    li.querySelector('.remove-file').addEventListener('click', (ev) => {
+                        ev.stopPropagation();
+                        const current = Array.from(resumeInput.files || []);
+                        current.splice(idx, 1);
+                        const dt = new DataTransfer();
+                        current.forEach(fx => dt.items.add(fx));
+                        resumeInput.files = dt.files;
+                        renderFileList(Array.from(resumeInput.files));
+                    });
+                    fileList.appendChild(li);
+                });
+            }
+        }
+        
+        async function getFileContent(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => resolve(e.target.result);
+                reader.onerror = (e) => reject(new Error("Failed to read file."));
+                reader.readAsText(file);
+            });
+        }
 
-    function animateScore(score) {
-      const fill = document.getElementById("scoreFill");
-      const text = document.getElementById("scoreText");
-      fill.style.width = "0%";
-      text.innerText = "Calculating...";
+        async function handleGeminiFeature(title, featureFunction) {
+            const resumeFile = resumeInput.files[0];
+            const jobDesc = jobDescInput.value.trim();
 
-      setTimeout(() => {
-        fill.style.width = score + "%";
-        text.innerText = score + "% Match";
-      }, 300);
-    }
+            if (!resumeFile) {
+                showMessage("Please upload your resume first.", "warning");
+                return;
+            }
+            if (!jobDesc) {
+                showMessage("Please paste the job description first.", "warning");
+                return;
+            }
 
-    function copyToClipboard() {
-      if (!enhancedResumeContent) return showMessage("⚠️ Nothing to copy yet.");
-      navigator.clipboard.writeText(enhancedResumeContent).then(() => {
-        showMessage("✅ Resume copied to clipboard!");
-      });
-    }
+            const resumeText = await getFileContent(resumeFile);
+            
+            geminiOutputContainer.classList.remove('hidden');
+            geminiOutputTitle.textContent = title;
+            geminiOutput.textContent = '';
+            geminiOutput.classList.add('hidden');
+            geminiOutputSkeleton.classList.remove('hidden');
+            
+            try {
+                const generatedContent = await featureFunction(resumeText, jobDesc);
+                geminiOutput.innerHTML = generatedContent.replace(/\n/g, '<br>');
+                geminiOutput.classList.remove('hidden');
+                geminiOutputSkeleton.classList.add('hidden');
+            } catch (error) {
+                geminiOutput.textContent = `Error: ${error.message}`;
+                geminiOutput.classList.remove('hidden');
+                geminiOutputSkeleton.classList.add('hidden');
+                showMessage("Failed to generate content.", "danger");
+            }
+        }
 
-    function downloadResume() {
-      if (!enhancedResumeContent) return showMessage("⚠️ Nothing to download yet.");
-      const blob = new Blob([enhancedResumeContent], { type: "text/plain;charset=utf-8" });
-      const link = document.createElement("a");
-      link.href = URL.createObjectURL(blob);
-      link.download = "tailored_resume.txt";
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      showMessage("⬇️ Resume downloaded!");
-    }
+        // New summarize behavior: call the enhance endpoint and show missing keywords, suggestions, strengths, and a short summary
+        async function handleSummarizeClick() {
+            const resumeFile = resumeInput.files[0];
+            const jobDesc = jobDescInput.value.trim();
 
-    function showMessage(msg) {
-      const box = document.getElementById("message-box");
-      box.innerText = msg;
-      box.classList.add("show");
-      setTimeout(() => box.classList.remove("show"), 3000);
-    }
-  </script>
+            if (!resumeFile) return showMessage("Please upload your resume first.", "warning");
+            if (!jobDesc) return showMessage("Please paste the job description first.", "warning");
+
+            // Show skeletons and ensure summary UI is visible
+            geminiOutputContainer.classList.remove('hidden');
+            geminiOutputTitle.textContent = 'Resume Summary';
+            geminiOutput.textContent = '';
+            geminiOutput.classList.add('hidden');
+            geminiOutputSkeleton.classList.remove('hidden');
+
+            // Show feedback skeletons
+            strengthsBox.classList.add('hidden');
+            missingBox.classList.add('hidden');
+            suggestionsBox.classList.add('hidden');
+
+            try {
+                const form = new FormData();
+                form.append('file', resumeFile);
+                const url = `${BACKEND_ENHANCE_UPLOAD_URL}?job_description=${encodeURIComponent(jobDesc)}`;
+                const resp = await fetch(url, { method: 'POST', body: form });
+                if (!resp.ok) throw new Error(`Server returned ${resp.status}`);
+                const data = await resp.json();
+
+                // Populate feedback boxes
+                updateFeedbackList(strengthsList, strengthsBox, data.feedback?.strengths || []);
+                updateFeedbackList(missingList, missingBox, data.missing_keywords || []);
+                updateFeedbackList(suggestionsList, suggestionsBox, data.feedback?.suggestions || [], true);
+
+                // Show a short summary in the AI output panel. Use the enhanced resume as source.
+                const enhanced = data.enhanced_resume || '';
+                // Create a brief summary (first 2-3 lines) or call server to generate if needed
+                const summarySnippet = enhanced.split('\n').filter(Boolean).slice(0,3).join('\n');
+                geminiOutput.innerHTML = summarySnippet.replace(/\n/g, '<br>');
+                geminiOutput.classList.remove('hidden');
+                geminiOutputSkeleton.classList.add('hidden');
+
+                showMessage('Summary and feedback loaded.', 'success');
+            } catch (error) {
+                console.error('Summarize failed', error);
+                geminiOutput.textContent = `Error: ${error.message}`;
+                geminiOutput.classList.remove('hidden');
+                geminiOutputSkeleton.classList.add('hidden');
+                showMessage('Failed to load summary.', 'danger');
+            }
+        }
+
+        async function generateSummary(resumeText, jobDesc) {
+            const prompt = `Based on the following resume, create a concise, professional summary or objective statement of a single paragraph. Do not invent information; only use what is provided. The summary should be tailored for a job with the following description.
+
+            Job Description: ${jobDesc}
+            ---
+            Resume: ${resumeText}`;
+            return await callGemini(prompt);
+        }
+
+        async function draftCoverLetter(resumeText, jobDesc) {
+            const prompt = `Draft a professional cover letter for the job described below. The letter should be formal and highlight how the candidate's skills and experiences from their resume align with the job description. Do not include placeholders like [Your Name] or [Hiring Manager]. Just provide the body of the letter.
+
+            Job Description: ${jobDesc}
+            ---
+            Resume: ${resumeText}`;
+            return await callGemini(prompt);
+        }
+
+        async function generateQuestions(resumeText, jobDesc) {
+            const prompt = `Generate a list of 5-7 common and technical interview questions for a candidate applying to the following job role. The questions should be relevant to the skills and responsibilities mentioned in the job description and the candidate's resume. Format the output as a numbered list.
+
+            Job Description: ${jobDesc}
+            ---
+            Resume: ${resumeText}`;
+            return await callGemini(prompt);
+        }
+
+        async function callGemini(prompt) {
+            const payload = {
+                contents: [{
+                    parts: [{ text: prompt }]
+                }],
+            };
+
+            // Use server-side generate endpoint to avoid exposing API keys in the client
+            const response = await fetch(BACKEND_GENERATE_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ prompt })
+            });
+
+            if (!response.ok) {
+                throw new Error(`Server generation failed with status: ${response.status}`);
+            }
+
+            const result = await response.json();
+            return result?.result || "No content was generated.";
+        }
+
+        async function handleGenerateResume() {
+            const file = resumeInput.files[0];
+            const jobDesc = jobDescInput.value.trim();
+
+            if (!file) return showMessage("Please upload your resume.", "warning");
+            if (!jobDesc) return showMessage("Please paste the job description.", "warning");
+
+            setLoadingState(true);
+
+            let retries = 0;
+            const maxRetries = 3;
+            let data = null;
+
+            // Upload the file + job description to the backend enhance_resume endpoint
+            while (retries < maxRetries) {
+                try {
+                    const form = new FormData();
+                    form.append('file', file);
+                    // job_description is sent as a query parameter per backend signature
+                    const url = `${BACKEND_ENHANCE_UPLOAD_URL}?job_description=${encodeURIComponent(jobDesc)}`;
+
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        body: form
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`Server call failed with status: ${response.status}`);
+                    }
+
+                    data = await response.json();
+                    break;
+                } catch (error) {
+                    console.error(`Attempt ${retries + 1} failed:`, error);
+                    retries++;
+                    if (retries === maxRetries) {
+                        showMessage(`Error: ${error.message}. Failed to get a valid response after multiple attempts.`, "danger");
+                        setLoadingState(false, true);
+                        return;
+                    }
+                    await new Promise(res => setTimeout(res, Math.pow(2, retries) * 1000));
+                }
+            }
+
+            if (data) {
+                    populateResults(data);
+                    // Save full response to local history for quick retrieval
+                    try {
+                        saveToHistory({ data, jobDesc, timestamp: Date.now() });
+                    } catch (e) { console.warn('Could not save history', e); }
+                    showMessage("Resume tailored successfully!", "success");
+            }
+        }
+
+        // ----- New Analyze / AI Generate workflow -----
+        async function handleAnalyzeClick() {
+            const file = resumeInput.files[0];
+            const jobDesc = jobDescInput.value.trim();
+
+            if (!file) return showMessage("Please upload your resume.", "warning");
+            if (!jobDesc) return showMessage("Please paste the job description.", "warning");
+
+            setLoadingState(true);
+
+            try {
+                const form = new FormData();
+                form.append('file', file);
+
+                const url = `/resume/api/analyze?job_description=${encodeURIComponent(jobDesc)}`;
+                const resp = await fetch(url, { method: 'POST', body: form });
+                if (!resp.ok) throw new Error(`Server returned ${resp.status}`);
+                const data = await resp.json();
+
+                // data should include unwanted_sections (array of strings / snippets) and matched_sections
+                // Highlight unwanted sections in the currently displayed resume preview (if any)
+                // We will highlight by wrapping unwanted phrases with a red class using existing highlight mechanism
+
+                // Use server-extracted plain text (avoids rendering raw PDF bytes)
+                const originalResume = data.extracted_text || await getFileContent(file);
+
+                // Apply red highlight for unwanted sections
+                let highlighted = originalResume || '';
+                if (data.unwanted_sections && data.unwanted_sections.length) {
+                    data.unwanted_sections.forEach(phrase => {
+                        if (!phrase) return;
+                        const esc = phrase.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&');
+                        const regex = new RegExp(`(${esc})`, 'gi');
+                        highlighted = highlighted.replace(regex, '<span class="highlighted-keyword" style="background-color: rgba(239,68,68,0.85); color: white;">$&</span>');
+                    });
+                }
+
+                tailoredResumeContent.innerHTML = (highlighted || '').replace(/\n/g, '<br>');
+                tailoredResumeContent.classList.remove('hidden');
+
+                // Store matched_sections on the generate button for later use
+                generateBtn.dataset.matched = JSON.stringify(data.matched_sections || []);
+
+                // Dynamically insert the AI Generate button below the Analyze button if not present
+                ensureAIGenerateButton();
+
+                showMessage('Analysis complete. Review highlighted items and click AI Generate to tailor the resume.', 'success');
+            } catch (err) {
+                console.error('Analyze failed', err);
+                showMessage('Analysis failed. See console for details.', 'danger');
+            } finally {
+                setLoadingState(false);
+            }
+        }
+
+        function ensureAIGenerateButton() {
+            const area = document.getElementById('generateArea');
+            if (!area) return;
+            if (document.getElementById('aiGenerateBtn')) return; // already added
+
+            const btn = document.createElement('button');
+            btn.id = 'aiGenerateBtn';
+            btn.className = 'action-btn text-white px-10 py-4 rounded-lg font-semibold text-lg hover:bg-teal-700 transition-colors duration-200 shadow-xl w-full mt-3';
+            btn.textContent = '✨ AI Generate';
+            btn.addEventListener('click', handleAIGenerateClick);
+            area.appendChild(btn);
+        }
+
+        async function handleAIGenerateClick() {
+            const file = resumeInput.files[0];
+            const jobDesc = jobDescInput.value.trim();
+            const matched = JSON.parse(generateBtn.dataset.matched || '[]');
+
+            if (!file) return showMessage("Please upload your resume.", "warning");
+            if (!jobDesc) return showMessage("Please paste the job description.", "warning");
+
+            setLoadingState(true);
+
+            try {
+                const form = new FormData();
+                form.append('file', file);
+                const url = `/resume/api/generate?job_description=${encodeURIComponent(jobDesc)}&matched_sections=${encodeURIComponent(JSON.stringify(matched))}`;
+                const resp = await fetch(url, { method: 'POST', body: form });
+                if (!resp.ok) throw new Error(`Server returned ${resp.status}`);
+                const data = await resp.json();
+
+                // Display the enhanced resume and highlight matched/added content in green
+                tailoredResumeText = data.enhanced_resume || '';
+                let display = tailoredResumeText;
+                if (data.matched_sections && data.matched_sections.length) {
+                    data.matched_sections.forEach(phrase => {
+                        if (!phrase) return;
+                        const esc = phrase.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&');
+                        const regex = new RegExp(`(${esc})`, 'gi');
+                        display = display.replace(regex, '<span class="highlighted-keyword" style="background-color: rgba(16,185,129,0.9); color: white;">$&</span>');
+                    });
+                }
+
+                tailoredResumeContent.innerHTML = display.replace(/\n/g, '<br>');
+
+                // Update ATS and feedback if provided
+                if (data.ats_breakdown) renderAtsChart(data.ats_breakdown);
+                if (data.feedback) updateFeedbackList(strengthsList, strengthsBox, data.feedback.strengths);
+                if (data.missing_keywords) updateFeedbackList(missingList, missingBox, data.missing_keywords);
+                if (data.feedback?.suggestions) updateFeedbackList(suggestionsList, suggestionsBox, data.feedback.suggestions, true);
+
+                showMessage('AI tailoring complete.', 'success');
+                // Replace generate button with inline ATS if server provided total_score
+                try {
+                    if (data.total_score) showInlineAts(data.total_score);
+                } catch (e) { /* noop */ }
+            } catch (err) {
+                console.error('AI Generate failed', err);
+                showMessage('AI generation failed. See console for details.', 'danger');
+            } finally {
+                setLoadingState(false);
+            }
+        }
+
+        // ----- End new workflow -----
+
+            // Persist a tailoring result to localStorage
+            function saveToHistory(entry) {
+                if (!entry || !entry.data) return;
+                const raw = localStorage.getItem('resumeHistory');
+                let list = raw ? JSON.parse(raw) : [];
+                // keep max 25 entries
+                list.unshift(entry);
+                if (list.length > 25) list = list.slice(0, 25);
+                localStorage.setItem('resumeHistory', JSON.stringify(list));
+                loadHistory();
+            }
+
+            // Load history from localStorage and render into historyList
+            function loadHistory() {
+                try {
+                    const raw = localStorage.getItem('resumeHistory');
+                    const list = raw ? JSON.parse(raw) : [];
+                    historyList.innerHTML = '';
+                    list.forEach((item, idx) => {
+                        const li = document.createElement('li');
+                        li.className = 'flex items-center justify-between p-3 rounded-lg bg-white dark:bg-gray-800';
+                        const left = document.createElement('div');
+                        left.innerHTML = `<div class="font-medium text-sm">${(item.jobDesc || '').slice(0, 80) || 'Tailored Result'}</div><div class="text-xs text-gray-500">${new Date(item.timestamp).toLocaleString()}</div>`;
+                        const right = document.createElement('div');
+                        right.innerHTML = `<button class="load-history mr-2 text-sm text-teal-600 hover:underline">Load</button><button class="delete-history text-sm text-red-500">Delete</button>`;
+                        right.querySelector('.load-history').addEventListener('click', () => {
+                            try {
+                                populateResults(item.data);
+                                historyPanel.classList.remove('translate-x-0');
+                                showMessage('Loaded history item', 'info');
+                            } catch (e) { console.error(e); showMessage('Failed to load history', 'danger'); }
+                        });
+                        right.querySelector('.delete-history').addEventListener('click', () => {
+                            list.splice(idx, 1);
+                            localStorage.setItem('resumeHistory', JSON.stringify(list));
+                            loadHistory();
+                        });
+                        li.appendChild(left);
+                        li.appendChild(right);
+                        historyList.appendChild(li);
+                    });
+                } catch (e) {
+                    console.error('Error reading history', e);
+                }
+            }
+
+        function setLoadingState(isLoading, isError = false) {
+            generateBtn.disabled = isLoading;
+            generateBtn.innerHTML = isLoading ? `<div class="spinner border-t-white"></div> Generating...` : '✨ Tailor My Resume';
+            
+            tailoredResumeContent.classList.add('hidden');
+            resumeSkeleton.classList.add('hidden');
+            
+            atsScoreContainer.classList.add('hidden');
+            atsSkeleton.classList.add('hidden');
+            
+            strengthsBox.classList.add('hidden');
+            missingBox.classList.add('hidden');
+            suggestionsBox.classList.add('hidden');
+            
+            if (isLoading) {
+                resumeSkeleton.classList.remove('hidden');
+                atsSkeleton.classList.remove('hidden');
+                // When loading starts, ensure any inline ATS is removed and the generate button is visible
+                restoreGenerateButton();
+            } else if (!isError) {
+                tailoredResumeContent.classList.remove('hidden');
+                atsScoreContainer.classList.remove('hidden');
+            }
+        }
+
+        // Create a small inline ATS badge element to place inside #generateArea
+        function createInlineAtsElement(score) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'inline-ats';
+
+            const ring = document.createElement('div');
+            ring.className = 'inline-ats-ring';
+            const numeric = document.createElement('div');
+            numeric.textContent = `${score}%`;
+            ring.appendChild(numeric);
+
+            const label = document.createElement('div');
+            label.className = 'inline-ats-label';
+            label.textContent = 'ATS Match';
+
+            wrapper.appendChild(ring);
+            wrapper.appendChild(label);
+
+            // Color the ring based on score
+            if (score < 50) ring.classList.add('bad');
+            else if (score < 80) ring.classList.add('warn');
+            else ring.classList.add('good');
+
+            return wrapper;
+        }
+
+        // Replace the generate button with the inline ATS badge
+        function showInlineAts(score) {
+            try {
+                const area = document.getElementById('generateArea');
+                if (!area) return;
+                // Hide original button
+                const btn = document.getElementById('generateBtn');
+                if (btn) btn.style.display = 'none';
+
+                // Remove any existing inline badge
+                const existing = document.getElementById('inlineAtsBadge');
+                if (existing) existing.remove();
+
+                const inline = createInlineAtsElement(score);
+                inline.id = 'inlineAtsBadge';
+                area.appendChild(inline);
+            } catch (e) { console.warn('Could not show inline ATS', e); }
+        }
+
+        // Restore the generate button and remove inline badge
+        function restoreGenerateButton() {
+            try {
+                const area = document.getElementById('generateArea');
+                if (!area) return;
+                const btn = document.getElementById('generateBtn');
+                if (btn) btn.style.display = '';
+                const existing = document.getElementById('inlineAtsBadge');
+                if (existing) existing.remove();
+            } catch (e) { console.warn('Could not restore generate button', e); }
+        }
+
+        function populateResults(data) {
+            tailoredResumeText = data.enhanced_resume;
+            const highlightedResume = highlightKeywords(data.enhanced_resume, data.missing_keywords);
+            tailoredResumeContent.innerHTML = highlightedResume;
+
+            renderAtsChart(data.ats_breakdown);
+
+            // Compute total score and show inline ATS badge in place of generate button
+            try {
+                const values = Object.values(data.ats_breakdown || {});
+                const totalScore = values.length > 0 ? Math.round(values.reduce((a, b) => a + b, 0) / values.length) : 0;
+                showInlineAts(totalScore);
+            } catch (e) { console.warn('Could not compute/show inline ATS', e); }
+
+            updateFeedbackList(strengthsList, strengthsBox, data.feedback.strengths);
+            updateFeedbackList(missingList, missingBox, data.missing_keywords);
+            updateFeedbackList(suggestionsList, suggestionsBox, data.feedback.suggestions, true);
+            
+            setLoadingState(false);
+        }
+        
+        function highlightKeywords(text, keywords = []) {
+            let processedText = text;
+            if (keywords && keywords.length > 0) {
+                const escapedKeywords = keywords.map(k => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+                const regex = new RegExp(`(${escapedKeywords.join('|')})`, 'gi');
+                processedText = processedText.replace(regex, '<span class="highlighted-keyword">$&</span>');
+            }
+            return processedText;
+        }
+
+        function renderAtsChart(breakdown) {
+            const scoreTextEl = document.getElementById('atsScoreText');
+            const scoreRatingEl = document.getElementById('atsScoreRating');
+            const scoreCircleEl = document.getElementById('atsScoreCircle');
+            const breakdownContainer = document.getElementById('atsBreakdownContainer');
+
+            const labels = Object.keys(breakdown);
+            const data = Object.values(breakdown);
+            const totalScore = data.length > 0 ? Math.round(data.reduce((a, b) => a + b, 0) / data.length) : 0;
+
+            // 1. Animate Score Text
+            let currentScore = 0;
+            scoreTextEl.textContent = `${totalScore}%`; // Set final score immediately
+            const counter = setInterval(() => {
+                if (currentScore < totalScore) {
+                    currentScore = Math.min(currentScore + 1, totalScore);
+                } else if (currentScore > totalScore) {
+                     currentScore = Math.max(currentScore - 1, totalScore);
+                } else {
+                     clearInterval(counter);
+                }
+            }, 15);
+
+            // 2. Set Score Rating and Gauge Color
+            let rating = '';
+            let scoreColorClass = '';
+            if (totalScore < 50) {
+                rating = 'Needs Improvement';
+                scoreColorClass = 'text-red-500';
+            } else if (totalScore < 80) {
+                rating = 'Good Match';
+                scoreColorClass = 'text-yellow-500';
+            } else {
+                rating = 'Excellent Fit';
+                scoreColorClass = 'text-teal-500';
+            }
+            scoreRatingEl.textContent = rating;
+            scoreCircleEl.classList.remove('text-red-500', 'text-yellow-500', 'text-teal-500');
+            scoreCircleEl.classList.add(scoreColorClass);
+
+            // 3. Update SVG Gauge
+            const offset = 100 - totalScore;
+            scoreCircleEl.style.strokeDashoffset = offset;
+
+            // 4. Populate Breakdown
+            breakdownContainer.innerHTML = '';
+            const icons = {
+                'Keywords': `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18.24-1.42-1.42a2 2 0 0 0-2.82 0l-1.42 1.42a2 2 0 0 1-2.82 0L9.8 14.8a2 2 0 0 0-2.82 0l-1.42 1.42a2 2 0 0 1-2.82 0L1.29 14.8a2 2 0 0 0-2.82 0l-1.42 1.42a2 2 0 0 1-2.82 0L2.27 12l-1.42-1.42a2 2 0 0 1 0-2.82l1.42-1.42a2 2 0 0 0 0-2.82L2.27 4.9a2 2 0 0 1 2.82 0l1.42 1.42a2 2 0 0 0 2.82 0l4.44-4.44a2 2 0 0 1 2.82 0l1.42 1.42a2 2 0 0 0 2.82 0l1.42-1.42a2 2 0 0 1 2.82 0l1.42 1.42a2 2 0 0 0 2.82 0l1.42-1.42a2 2 0 0 1 2.82 0l-1.42 1.42a2 2 0 0 0 0 2.82l1.42 1.42a2 2 0 0 1 0 2.82L21.73 18.24Z"/><circle cx="9" cy="9" r="3"/></svg>`,
+                'Formatting': `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><line x1="3" x2="21" y1="9" y2="9"/><line x1="9" x2="9" y1="21" y2="9"/></svg>`,
+                'Skills': `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>`,
+                'Experience': `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="7" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>`
+            };
+
+            Object.entries(breakdown).forEach(([label, score]) => {
+                const itemEl = document.createElement('div');
+                itemEl.className = 'ats-breakdown-item';
+                itemEl.innerHTML = `
+                    <div class="text-secondary">${icons[label] || ''}</div>
+                    <div class="flex-1">
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="text-sm font-medium text-primary">${label}</span>
+                            <span class="text-sm font-semibold text-primary">${score}%</span>
+                        </div>
+                        <div class="ats-progress-bar-bg">
+                            <div class="ats-progress-bar" data-score="${score}"></div>
+                        </div>
+                    </div>
+                `;
+                breakdownContainer.appendChild(itemEl);
+            });
+
+            // Animate progress bars after they are in the DOM
+            setTimeout(() => {
+                document.querySelectorAll('.ats-progress-bar').forEach(bar => {
+                    bar.style.width = `${bar.dataset.score}%`;
+                });
+            }, 100);
+        }
+
+        function updateFeedbackList(listElement, boxElement, items, isSuggestions = false) {
+            listElement.innerHTML = "";
+            if (items && items.length > 0) {
+                items.forEach(itemText => {
+                    const li = document.createElement("li");
+                    li.className = 'p-3 rounded-lg text-sm bg-gray-100 dark:bg-gray-800 transition-colors duration-300';
+                    if (isSuggestions) {
+                        li.innerHTML = `<span>${itemText}</span><button class="copy-suggestion ml-2 text-gray-500 hover:text-teal-600">📋</button>`;
+                        li.querySelector('.copy-suggestion').addEventListener('click', () => {
+                            navigator.clipboard.writeText(itemText);
+                            showMessage("Suggestion copied!", "success");
+                        });
+                    } else {
+                        li.textContent = itemText;
+                    }
+                    listElement.appendChild(li);
+                });
+                boxElement.classList.remove('hidden');
+            } else {
+                boxElement.classList.add('hidden');
+            }
+        }
+        
+        function copyToClipboard() {
+            if (!tailoredResumeText) return showMessage("Nothing to copy yet.", "warning");
+            try {
+                const tempTextarea = document.createElement('textarea');
+                tempTextarea.value = tailoredResumeText;
+                document.body.appendChild(tempTextarea);
+                tempTextarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(tempTextarea);
+                showMessage("Resume text copied!", "success");
+            } catch (err) {
+                showMessage("Failed to copy. Please try again.", "danger");
+            }
+        }
+
+        async function downloadAsPDF() {
+            if (!tailoredResumeText) return showMessage("Nothing to download yet.", "warning");
+            showMessage("Generating PDF...", "info");
+            
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+            
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = tailoredResumeContent.innerHTML;
+            tempDiv.style.padding = '20pt';
+            tempDiv.style.fontFamily = 'Inter, sans-serif';
+            tempDiv.style.whiteSpace = 'pre-wrap';
+            tempDiv.style.position = 'absolute';
+            tempDiv.style.left = '-9999px';
+            document.body.appendChild(tempDiv);
+            
+            html2canvas(tempDiv, { scale: 2 }).then(canvas => {
+                const imgData = canvas.toDataURL('image/png');
+                const imgWidth = 595.28; // A4 width in pts
+                const pageHeight = 841.89; // A4 height in pts
+                const imgHeight = canvas.height * imgWidth / canvas.width;
+                let heightLeft = imgHeight;
+                let position = 0;
+                doc.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                heightLeft -= pageHeight;
+                while (heightLeft >= 0) {
+                    position = heightLeft - imgHeight;
+                    doc.addPage();
+                    doc.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                    heightLeft -= pageHeight;
+                }
+                doc.save('tailored_resume.pdf');
+                document.body.removeChild(tempDiv);
+                showMessage("PDF downloaded!", "success");
+            }).catch(error => {
+                document.body.removeChild(tempDiv);
+                showMessage(`Error generating PDF: ${error.message}`, "danger");
+            });
+        }
+
+        async function downloadAsDOCX() {
+            if (!tailoredResumeText) return showMessage("Nothing to download yet.", "warning");
+            showMessage("Generating DOCX...", "info");
+            try {
+                const response = await fetch("/resume/generate_docx", {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ resume_text: tailoredResumeText })
+                });
+                if (!response.ok) throw new Error('Failed to generate DOCX file.');
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                a.download = 'tailored_resume.docx';
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                showMessage("DOCX downloaded!", "success");
+            } catch (error) {
+                showMessage(`Error: ${error.message}`, "danger");
+            }
+        }
+
+        function showMessage(msg, type = "info") {
+            const box = document.getElementById("message-box");
+            box.textContent = msg;
+            let bgColor = '#333';
+            if (type === 'success') bgColor = '#10b981';
+            if (type === 'warning') bgColor = '#f59e0b';
+            if (type === 'danger') bgColor = '#ef4444';
+            box.style.backgroundColor = bgColor;
+            box.classList.remove('opacity-0', 'translate-y-4');
+            box.classList.add('opacity-100', 'translate-y-0');
+            setTimeout(() => {
+                box.classList.remove('opacity-100', 'translate-y-0');
+                box.classList.add('opacity-0', 'translate-y-4');
+            }, 3000);
+        }
+
+    </script>
 </body>
 </html>

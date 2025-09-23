@@ -1,13 +1,23 @@
-# services/docx_generator.py
 from docx import Document
-from pathlib import Path
+from docx.shared import Inches
+import io
 
-def create_docx_from_text(text: str, out_path: Path):
-    doc = Document()
-    # Split into paragraphs by two newlines preserving reasonable formatting
-    for block in text.split("\n\n"):
-        for line in block.splitlines():
-            doc.add_paragraph(line)
-        # add an empty paragraph between blocks
-        doc.add_paragraph()
-    doc.save(out_path)
+def create_docx_from_text(text: str):
+    """
+    Creates a DOCX document in memory from a string of text.
+
+    Args:
+        text: The text content to be included in the document.
+
+    Returns:
+        An in-memory buffer (io.BytesIO) containing the DOCX file.
+    """
+    document = Document()
+    document.add_paragraph(text)
+    
+    # Create an in-memory buffer
+    buffer = io.BytesIO()
+    document.save(buffer)
+    buffer.seek(0) # Rewind the buffer to the beginning
+    
+    return buffer
