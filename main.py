@@ -52,26 +52,32 @@ async def health_check():
 # local development if the frontend hasn't been built.
 static_files_dir = "frontend"
 if os.path.isdir(static_files_dir):
-    # Register the root route first so requests to '/' return landing.html (if present).
+    # Root (landing page) route
     @app.get("/")
-    async def serve_index():
-        # Serve the landing page at the root so users see it first
+    async def serve_landing():
         landing_path = os.path.join(static_files_dir, "landing.html")
         if os.path.isfile(landing_path):
             return FileResponse(landing_path)
+        # Fallback to app if landing missing
         return FileResponse(os.path.join(static_files_dir, "index.html"))
 
+    # Dedicated app route for the interactive optimizer UI
+    @app.get("/app")
+    async def serve_app():
+        index_path = os.path.join(static_files_dir, "index.html")
+        if not os.path.isfile(index_path):
+            raise HTTPException(status_code=404, detail="index.html not found")
+        return FileResponse(index_path)
+
     # Backwards-compatible route: serve files requested under /frontend/* paths.
-    # This helps older links or bookmarks that include the 'frontend/' prefix.
     @app.get('/frontend/{path:path}')
     async def serve_frontend_path(path: str):
         requested = os.path.join(static_files_dir, path)
         if os.path.isfile(requested):
             return FileResponse(requested)
-        # Not found — raise 404 so the client knows
         raise HTTPException(status_code=404, detail=f"File not found: {path}")
 
-    # Mount static files after routes so the root route above takes precedence.
-    app.mount("/", StaticFiles(directory=static_files_dir, html=True), name="static")
+    # Mount static assets at /static to avoid overshadowing explicit routes
+    app.mount("/static", StaticFiles(directory=static_files_dir, html=True), name="static")
 else:
     logging.warning(f"Static files directory '{static_files_dir}' not found. Frontend will not be served.")
