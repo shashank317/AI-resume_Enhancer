@@ -84,39 +84,12 @@ Optional (improved ATS lemma quality):
 python -m spacy download en_core_web_sm
 ```
 
-## 🐳 Docker
+## 🧪 Quick Local Restart (No Docker)
 
-Build:
-
+If you change dependencies:
 ```bash
-docker build -t ai-resume-enhancer:local .
-```
-
-Run (Windows cmd):
-
-```bash
-docker run --rm -p 8000:8000 ^
-  -e OPENROUTER_API_KEY="your_key_here" ^
-  -e GEMINI_API_KEY="optional_gemini_key" ^
-  -e MODEL_NAME="deepseek/deepseek-chat" ^
-  -e GEMINI_MODEL="gemini-2.5-flash" ^
-  -e PORT=8000 ^
-  -e UPLOAD_DIR="/app/uploads" ^
-  -v %cd%/uploads:/app/uploads ^
-  --name ai-resume-local ai-resume-enhancer:local
-```
-
-docker-compose:
-
-```
-OPENROUTER_API_KEY=your_key_here
-GEMINI_API_KEY=optional
-MODEL_NAME=deepseek/deepseek-chat
-UPLOAD_DIR=/app/uploads
-```
-
-```bash
-docker-compose up --build
+pip install -r requirements.txt
+uvicorn main:app --reload
 ```
 
 ## 📒 Usage Guide
@@ -206,8 +179,7 @@ Notes:
 ├─ uploads/                 # Uploaded + generated artifacts
 ├─ logs/app.log             # Runtime log file
 ├─ tests/                   # Pytest suite
-├─ Dockerfile               # Production image (PORT aware)
-├─ docker-compose.yml       # Local orchestration
+├─ start.sh                 # Simple startup script (non-Docker)
 ├─ requirements.txt         # Dependencies
 └─ README.md
 ```
@@ -220,27 +192,50 @@ Notes:
 - Parsing: PyMuPDF, python-docx, python-multipart
 - Frontend: Vanilla JS, Tailwind CDN, jsPDF, html2canvas
 - Testing: pytest, httpx
-- Infra: Docker (dynamic PORT), dotenv
+- Infra: Plain Uvicorn (no Docker), dotenv
 
-## 🚀 Deploying to Render
+## 🚀 Deployment (Render Recommended)
 
-The Dockerfile:
-1. Installs dependencies
-2. Downloads `en_core_web_sm` (non‑fatal if it fails)
-3. Starts with `uvicorn main:app --port $PORT`
+This repo now includes `Dockerfile` and `render.yaml` for one‑click Render deployment.
 
-Render settings:
+### Render Steps
+1. Push repo to GitHub.
+2. In Render dashboard: New → Blueprint → point to this repo (uses `render.yaml`).
+3. Add secrets in the service settings (Environment):
+  - `OPENROUTER_API_KEY=...`
+  - `GEMINI_API_KEY=...` (optional)
+  - `MODEL_NAME=deepseek/deepseek-chat` (optional override)
+4. Deploy. Health endpoint: `/health`.
+5. Visit `https://<your-app>.onrender.com/app` for UI.
 
-- Type: Web Service (Docker)
-- Health Check: `/health`
-- Env Vars: `OPENROUTER_API_KEY`, optional `GEMINI_API_KEY`, `MODEL_NAME`, `GEMINI_MODEL`, `UPLOAD_DIR=/app/uploads`
+### Environment Variables (summary)
+| Key | Purpose |
+|-----|---------|
+| OPENROUTER_API_KEY | Enables multi‑model LLM cascade |
+| GEMINI_API_KEY | Gemini fallback layer |
+| MODEL_NAME | Primary preferred model |
+| GEMINI_MODEL | Optional Gemini override |
+| UPLOAD_DIR | Storage path (default `uploads`) |
+| PORT | Render internal port (auto) |
 
-Smoke test after deploy:
-
+### Local VM (Alternative, No Render)
+If you prefer a bare server:
 ```bash
-curl https://<host>/health
-curl -F "file=@resume.pdf" "https://<host>/resume/api/analyze?job_description=Test"
-curl -F "file=@resume.pdf" "https://<host>/resume/api/generate?job_description=Test&plain=1"
+python -m venv venv
+venv/Scripts/activate  # Windows adjust
+pip install -r requirements.txt
+uvicorn main:app --host 0.0.0.0 --port 8000
+```
+Systemd unit (Linux) similar to earlier—see git history if needed.
+
+### Static Frontend Split
+Host `frontend/` on a static host (GitHub Pages / Netlify) and set a global `BACKEND_BASE_URL` in your JS.
+
+### Smoke Test
+```bash
+curl https://<render-host>/health
+curl -F "file=@resume.pdf" "https://<render-host>/resume/api/analyze?job_description=Test"
+curl -F "file=@resume.pdf" "https://<render-host>/resume/api/generate?job_description=Test&plain=1"
 ```
 
 ## 🧪 AI Model Cascade & Fallback Logic

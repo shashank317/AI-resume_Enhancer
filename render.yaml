@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: ai-resume-enhancer
+    env: docker
+    plan: free
+    autoDeploy: true
+    healthCheckPath: /health
+    envVars:
+      - key: PORT
+        value: 8000
+      # Add secrets in Render dashboard (do not commit real keys)
+      # - key: OPENROUTER_API_KEY
+      #   sync: false
+      # - key: GEMINI_API_KEY
+      #   sync: false

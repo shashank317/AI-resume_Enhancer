@@ -1,13 +1,23 @@
-version: '3.8'
-
+version: '3.9'
 services:
   web:
     build: .
+    container_name: ai-resume-web
     ports:
       - "8000:8000"
     environment:
       - PORT=8000
-      # Add any required env vars here, do NOT commit secrets to the repo
-      # - GEMINI_API_KEY=your_key_here
+      - MODEL_NAME=deepseek/deepseek-chat
+      # - OPENROUTER_API_KEY=your_key_here
+      # - GEMINI_API_KEY=your_gemini_key_here
+      - UPLOAD_DIR=/app/uploads
     volumes:
-      - ./:/app
+      - ./uploads:/app/uploads
+      - ./logs:/app/logs
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
