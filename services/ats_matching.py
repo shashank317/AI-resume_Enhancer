@@ -63,36 +63,65 @@ def normalize(text: str) -> str:
 
 
 _SYN_MAP: list[tuple[re.Pattern, str]] = [
-    # REST/RESTful
+    # --- Software & APIs ---
     (re.compile(r"\brest\s*ful\b"), "rest"),
-    (re.compile(r"\brestful apis?\b"), "rest apis"),
-    (re.compile(r"\brest apis?\b"), "rest apis"),
+    (re.compile(r"\brestful apis?\b"), "rest api"),
     (re.compile(r"\bapi\b"), "api"),
-    # Shell/Bash
+    (re.compile(r"\bgraphql\b"), "graphql"),
+    (re.compile(r"\bgrpc\b"), "grpc"),
+    # --- Shell & OS ---
     (re.compile(r"\bbash( scripting)?\b"), "shell scripting"),
     (re.compile(r"\bshell( scripting)?\b"), "shell scripting"),
     (re.compile(r"\bsh\b|\bzsh\b"), "shell scripting"),
-    # Databases
+    # --- Databases ---
     (re.compile(r"\bpostgres(?:ql)?\b"), "postgresql"),
     (re.compile(r"\bmongo ?db\b|\bmongo\b"), "mongodb"),
     (re.compile(r"\bms sql server\b|\bsql server\b"), "mssql"),
-    # Clouds
+    # --- Cloud & Platforms ---
     (re.compile(r"\bgoogle cloud platform\b|\bgcp\b"), "google cloud"),
     (re.compile(r"\bamazon web services\b|\baws\b"), "aws"),
     (re.compile(r"\bmicrosoft azure\b|\bazure\b"), "azure"),
-    # Languages & runtimes
+    (re.compile(r"\bheroku\b"), "heroku"),
+    (re.compile(r"\brender\b"), "render"),
+    # --- Programming Languages ---
     (re.compile(r"\bjs\b|\bjava script\b"), "javascript"),
     (re.compile(r"\bts\b"), "typescript"),
     (re.compile(r"\bnode(?:\.js|js)?\b"), "node.js"),
     (re.compile(r"\breact(?:\.js|js)?\b"), "react"),
+    (re.compile(r"\bvue(?:\.js|js)?\b"), "vue"),
+    (re.compile(r"\bnext(?:\.js|js)?\b"), "next.js"),
+    (re.compile(r"\bnest(?:\.js|js)?\b"), "nest.js"),
     (re.compile(r"\bc\+\+\b"), "c++"),
     (re.compile(r"\bc#\b"), "c#"),
-    # DevOps
+    # --- DevOps / Infra ---
     (re.compile(r"\bci\s*/\s*cd\b|\bcicd\b|\bci cd\b"), "ci/cd"),
     (re.compile(r"\bk8s\b"), "kubernetes"),
-    # AI/ML
+    (re.compile(r"\bterraform\b"), "terraform"),
+    (re.compile(r"\bansible\b"), "ansible"),
+    (re.compile(r"\bjenkins\b"), "jenkins"),
+    # --- AI / ML / Data ---
     (re.compile(r"\bmachine learning\b|\bml\b"), "machine learning"),
-    (re.compile(r"\bnatural language processing\b"), "nlp"),
+    (re.compile(r"\bnatural language processing\b|\bnlp\b"), "nlp"),
+    (re.compile(r"\bartificial intelligence\b|\bai\b"), "ai"),
+    (re.compile(r"\bdeep learning\b"), "deep learning"),
+    (re.compile(r"\bcomputer vision\b"), "computer vision"),
+    (re.compile(r"\bdata analysis\b|\bdata analytics\b"), "data analytics"),
+    (re.compile(r"\bdata visuali[sz]ation\b"), "data visualization"),
+    # --- Security / Cyber ---
+    (re.compile(r"\bpenetration testing\b|\bpentesting\b"), "vulnerability assessment"),
+    (re.compile(r"\bincident response\b|\bsecurity incident\b"), "incident response"),
+    (re.compile(r"\bmalware analysis\b|\bthreat analysis\b"), "malware analysis"),
+    (re.compile(r"\bvulnerability scanning\b|\bvulnerability testing\b"), "vulnerability assessment"),
+    (re.compile(r"\brisk management\b|\brisk assessment\b"), "risk management"),
+    (re.compile(r"\bforensics\b|\bdigital forensics\b"), "digital forensics"),
+    (re.compile(r"\bsecurity operations center\b|\bsoc\b"), "soc"),
+    (re.compile(r"\bintrusion detection\b|\bids\b"), "ids"),
+    (re.compile(r"\bintrusion prevention\b|\bips\b"), "ips"),
+    # --- Misc / Soft Skills ---
+    (re.compile(r"\bcommunication skills?\b"), "communication"),
+    (re.compile(r"\bproblem solving\b"), "problem solving"),
+    (re.compile(r"\bteamwork\b"), "team collaboration"),
+    (re.compile(r"\btime management\b"), "time management"),
 ]
 
 
@@ -139,32 +168,46 @@ def _group_co_match(kw_norm: str, resume_lemmas: Set[str]) -> bool:
 
 
 # Heuristic hints to keep only relevant JD keywords (reduce noise)
-TECH_HINTS = {
-    # Core programming & platforms
-    "python","java","c++","c#","go","ruby","javascript","typescript","ts","js","sql","nosql",
-    "postgres","postgresql","mysql","mongodb","mssql","oracle","redis","elasticsearch","kafka",
-    "aws","gcp","google cloud","azure","cloud","serverless","lambda","ec2","s3",
-    "docker","kubernetes","k8s","helm","terraform","ansible","jenkins","git","github","gitlab",
-    "linux","bash","shell","scripting","powershell","windows",
-    "api","rest","restful","graphql","grpc","soap",
-    "microservices","monolith","distributed","scalability",
-    "security","cyber","firewall","vpn","ids","ips","siem","soc","iam","oauth","oidc",
-    "testing","unit","integration","e2e","pytest","jest",
-    "ml","machine learning","ai","nlp","cv","pandas","numpy","scikit","sklearn","pytorch","tensorflow",
-    "prometheus","grafana","datadog","new relic",
-    "devops","ci/cd","cicd","kpi","etl","airflow",
-    # Data & analytics additions
-    "data","data analysis","data analytics","data science","data visualization","visualization",
-    "statistics","statistical analysis","data mining","predictive modeling","predictive modelling",
-    "power bi","tableau","excel","spreadsheet","business analysis","insights","dashboard","dashboards",
-    "data cleaning","data wrangling","data preprocessing","feature engineering","regression",
-    "classification","clustering","forecasting","model evaluation","pipeline","pipelines",
-    "database","databases","data integrity","data quality","reporting","bi","analytics",
+DOMAIN_HINTS = {
+    # Programming & Frameworks
+    "python","java","c++","c#","go","ruby","php","javascript","typescript","html","css",
+    "fastapi","django","flask","spring","express","react","vue","next.js","node.js","nest.js",
+    "git","github","gitlab","rest api","graphql","grpc","soap","microservices","oop","design patterns",
+    # Cloud & DevOps
+    "aws","azure","google cloud","gcp","render","heroku","docker","kubernetes","terraform","ansible",
+    "jenkins","helm","ci/cd","linux","bash","shell scripting","powershell","monitoring","deployment",
+    # Databases & Data
+    "sql","nosql","postgresql","mysql","mongodb","sqlite","oracle","redis","elasticsearch","kafka",
+    "etl","data pipeline","data analytics","data science","pandas","numpy","tableau","power bi",
+    "data warehouse","spark","airflow","hadoop",
+    # Cybersecurity
+    "cyber security","information security","vulnerability assessment","penetration testing",
+    "incident response","soc","siem","firewall","vpn","ids","ips","threat intelligence",
+    "risk management","malware analysis","digital forensics","owasp","burp suite","nessus","nmap",
+    "wireshark","metasploit","security monitoring","network security","access control","zero trust",
+    "data breach","encryption","ssl","tls","web application security","security compliance",
+    # AI / ML
+    "machine learning","deep learning","nlp","computer vision","ai","model training","inference",
+    "pytorch","tensorflow","scikit","transformers","huggingface","openai","gemini",
+    # Networking / IT
+    "tcp","udp","http","https","dns","ip","vpn","routing","switching","networking","firewall","load balancer",
+    "wireshark","protocols","packet inspection","network architecture",
+    # Soft Skills / Business
+    "problem solving","team collaboration","communication","leadership","documentation",
+    "project management","agile","scrum","jira","time management","client communication",
 }
 
 # Default fuzzy/semantic threshold (lowered from previous 75 to improve recall on near-matches like
 # "predictive modeling" vs "predictive model"; still high enough to avoid spurious matches)
-DEFAULT_THRESHOLD = 65
+def adaptive_threshold(keyword: str) -> int:
+    length = len(keyword.split())
+    if length >= 3:
+        return 45
+    elif length == 2:
+        return 55
+    return 65
+
+DEFAULT_THRESHOLD = 60  # fallback
 
 
 def _is_relevant_kw(word: str) -> bool:
@@ -173,7 +216,7 @@ def _is_relevant_kw(word: str) -> bool:
         return False
     if re.search(r"[+.#]", w):
         return True
-    for h in TECH_HINTS:
+    for h in DOMAIN_HINTS:
         if h in w:
             return True
     return False
@@ -272,7 +315,8 @@ def ats_match(resume_text: str, jd_keywords: List[str], threshold: int = DEFAULT
                     score = max(score, fuzz.token_set_ratio(kw_norm, t))
                 except Exception:
                     pass
-            if score >= threshold:
+            thresh = adaptive_threshold(kw_norm)
+            if score >= thresh:
                 matched.append(kw)
                 continue
 

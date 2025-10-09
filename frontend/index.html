@@ -289,6 +289,11 @@
                         ATS COMPATIBILITY MATRIX
                     </h2>
                     <div id="atsScoreContainer" class="hidden fade-in">
+                        <div id="initialAtsBadge" class="hidden mb-4 flex items-center gap-3 px-4 py-2 rounded-lg bg-slate-800/60 border border-slate-700 text-slate-200 text-sm font-medium w-fit">
+                            <span class="text-slate-400">Initial ATS Score:</span>
+                            <span id="initialAtsValue" class="text-lg font-bold text-amber-300">0%</span>
+                            <span id="initialAtsRating" class="text-xs px-2 py-0.5 rounded bg-slate-700 ml-1"></span>
+                        </div>
                         <div class="flex flex-col md:flex-row items-center gap-8">
                             <!-- Score Gauge -->
                             <div class="relative w-40 h-40 flex-shrink-0">
@@ -297,8 +302,9 @@
                                     <path id="atsScoreCircle" class="stroke-current transition-all duration-1000 ease-out" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke-width="3.5" stroke-dasharray="100, 100" stroke-dashoffset="100" stroke-linecap="round" />
                                 </svg>
                                 <div class="absolute inset-0 flex flex-col items-center justify-center">
-                                    <span id="atsScoreText" class="text-5xl font-extrabold text-white">0%</span>
-                                    <span id="atsScoreRating" class="text-sm font-semibold mt-1"></span>
+                                    <span id="atsScoreText" class="text-4xl font-extrabold text-white">0%</span>
+                                    <span id="atsScoreRating" class="text-xs font-semibold mt-1 tracking-wide"></span>
+                                    <span class="mt-1 text-[10px] uppercase tracking-wider text-slate-400">Optimized</span>
                                 </div>
                             </div>
                             <!-- Breakdown Bars -->
@@ -480,7 +486,8 @@
         // --- Mock Backend Endpoints (Preserved) ---
         const BACKEND_GENERATE_URL = '/resume/generate'; 
         const BACKEND_ANALYZE_URL = '/resume/api/analyze';
-        const BACKEND_AI_GENERATE_URL = '/resume/api/generate';
+    const BACKEND_AI_GENERATE_URL = '/resume/api/generate';
+    const BACKEND_AI_GENERATE_TEXT_URL = '/resume/api/generate_text';
         const BACKEND_ENHANCE_UPLOAD_URL = '/resume/enhance_resume';
 
         // --- Event Listeners ---
@@ -614,7 +621,7 @@
                 try {
                     const form = new FormData();
                     form.append('file', file);
-                    const url = `${BACKEND_ANALYZE_URL}?job_description=${encodeURIComponent(jobDesc)}`;
+                    const url = `${BACKEND_ANALYZE_URL}?job_description=${encodeURIComponent(jobDesc)}&mode=fast`;
                     const resp = await fetch(url, { method: 'POST', body: form });
                     if(!resp.ok) throw new Error(`Analyze failed ${resp.status}`);
                     data = await resp.json();
@@ -634,7 +641,13 @@
                 tailoredResumeContent.classList.remove('hidden');
                 
                 generateBtn.dataset.matched = JSON.stringify(data.matched_sections || []);
+                // Display initial ATS score if available
+                if(typeof data.ats_score === 'number') {
+                    atsScoreContainer.classList.remove('hidden');
+                    showInitialAtsScore(data.ats_score);
+                }
                 ensureAIGenerateButton();
+                ensureDeepAnalyzeButton(file, jobDesc);
                 showMessage('Analysis complete. Click AI Generate to tailor.', 'success');
 
             } catch (err) {
@@ -652,6 +665,36 @@
             btn.className = 'action-btn w-full px-8 py-4 rounded-xl font-extrabold text-lg flex items-center justify-center gap-3 mt-4 transition duration-300';
             btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-sparkles"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/><path d="M5 3v4"/><path d="M19 17v4"/><path d="M3 5h4"/><path d="M17 19h4"/></svg> AI GENERATE OPTIMIZED VERSION`;
             btn.addEventListener('click', handleAIGenerateClick);
+            generateBtn.insertAdjacentElement('afterend', btn);
+        }
+
+        function ensureDeepAnalyzeButton(file, jobDesc){
+            if(document.getElementById('deepAnalyzeBtn')) return;
+            const btn = document.createElement('button');
+            btn.id = 'deepAnalyzeBtn';
+            btn.className = 'action-btn w-full px-8 py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 mt-2 bg-indigo-600 hover:bg-indigo-500';
+            btn.innerHTML = '<span>DEEP AI ANALYZE (Optional)</span>';
+            btn.addEventListener('click', async () => {
+                if(!file || !jobDesc) return;
+                btn.disabled = true; const old = btn.innerHTML; btn.innerHTML = 'Running AI…';
+                try {
+                    const form = new FormData(); form.append('file', file);
+                    const url = `${BACKEND_ANALYZE_URL}?job_description=${encodeURIComponent(jobDesc)}&mode=ai`;
+                    const resp = await fetch(url,{method:'POST',body:form});
+                    if(resp.ok){
+                        const data = await resp.json();
+                        const originalResume = data.extracted_text || await getFileContent(file);
+                        const redPhrases = sanitizePhrases(data.unwanted_sections || []);
+                        const highlighted = highlightPhrasesSafely(originalResume, redPhrases, `background-color:rgba(239,68,68,0.2); color: #fca5a5;`);
+                        tailoredResumeContent.innerHTML = highlighted;
+                        generateBtn.dataset.matched = JSON.stringify(data.matched_sections || []);
+                        showMessage('Deep AI analysis complete.', 'success');
+                    } else {
+                        showMessage('Deep AI analyze failed.', 'danger');
+                    }
+                } catch(e){ console.error(e); showMessage('Deep AI analyze error.', 'danger'); }
+                finally { btn.disabled = false; btn.innerHTML = old; }
+            });
             generateBtn.insertAdjacentElement('afterend', btn);
         }
 
@@ -673,7 +716,7 @@
 
                 if (FORCE_PLAIN_TEXT_OUTPUT) {
                     // Hard plain-text path: request backend with plain=1 and always treat response as raw text
-                    const url = `${BACKEND_AI_GENERATE_URL}?job_description=${encodeURIComponent(jobDesc)}&matched_sections=${matchedParam}&preserve_template=${preserve}&plain=1`;
+                    const url = `${BACKEND_AI_GENERATE_TEXT_URL}?job_description=${encodeURIComponent(jobDesc)}&matched_sections=${matchedParam}&preserve_template=${preserve}`;
                     try {
                         const resp = await fetch(url, { method: 'POST', body: form });
                         if(!resp.ok) throw new Error(`Generate failed ${resp.status}`);
@@ -709,6 +752,21 @@
                 }
 
                 populateResults(data);
+                // After generation, fetch updated ATS score (second display)
+                try {
+                    const scoreResp = await fetch(`/resume/ats/score_text?job_description=${encodeURIComponent(jobDesc)}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ resume_text: data.enhanced_resume || '' })
+                    });
+                    if(scoreResp.ok){
+                        const scoreData = await scoreResp.json();
+                        if(typeof scoreData.ats_score === 'number') {
+                            atsScoreContainer.classList.remove('hidden');
+                            renderAtsChart({'Optimized': scoreData.ats_score});
+                        }
+                    }
+                } catch(e){ console.warn('ATS post-score failed', e); }
                 saveToHistory({ data, jobDesc, timestamp: Date.now() });
                 showMessage('AI tailoring complete! ' + (FORCE_PLAIN_TEXT_OUTPUT ? 'Plain text ready.' : 'ATS score updated.'), 'success');
             } catch (err) {
@@ -906,6 +964,19 @@
                     bar.style.width = `${bar.dataset.score}%`;
                 });
             }, 100);
+        }
+
+        function showInitialAtsScore(score){
+            const badge = document.getElementById('initialAtsBadge');
+            const val = document.getElementById('initialAtsValue');
+            const rating = document.getElementById('initialAtsRating');
+            val.textContent = `${score}%`;
+            let label = 'LOW'; let cls = 'bg-red-500/20 text-red-300';
+            if(score >= 80){ label = 'STRONG'; cls = 'bg-emerald-500/20 text-emerald-300'; }
+            else if(score >= 50){ label = 'MODERATE'; cls = 'bg-amber-500/20 text-amber-300'; }
+            rating.textContent = label;
+            rating.className = `text-xs px-2 py-0.5 rounded ml-1 ${cls}`;
+            badge.classList.remove('hidden');
         }
 
         // --- History Management (Preserved) ---
